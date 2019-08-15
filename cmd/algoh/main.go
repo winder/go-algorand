@@ -105,7 +105,6 @@ func main() {
 
 	log := logging.Base()
 	configureLogging(genesisID, log, absolutePath)
-	defer log.CloseTelemetry()
 
 	exeDir, err = util.ExeDir()
 	if err != nil {
@@ -289,11 +288,8 @@ func initTelemetry(genesisID string, log logging.Logger, dataDirectory string) {
 		telemetryConfig.Enable = logging.TelemetryOverride(*telemetryOverride)
 
 		if telemetryConfig.Enable {
-			err = log.EnableTelemetry(telemetryConfig)
-			if err != nil {
-				fmt.Fprintln(os.Stdout, "error creating telemetry hook", err)
-				return
-			}
+			log.EnableTelemetry(telemetryConfig.Enable)
+
 			// For privacy concerns, we don't want to provide the full data directory to telemetry.
 			// But to be useful where multiple nodes are installed for convenience, we should be
 			// able to discriminate between instances with the last letter of the path.

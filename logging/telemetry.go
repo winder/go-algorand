@@ -18,13 +18,10 @@ package logging
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 
 	"github.com/algorand/go-algorand/config"
@@ -33,41 +30,6 @@ import (
 
 const telemetryPrefix = "/"
 const telemetrySeparator = "/"
-
-// EnableTelemetry configures and enables telemetry based on the config provided
-func EnableTelemetry(cfg TelemetryConfig, l *logger) (err error) {
-	telemetry, err := makeTelemetryState(cfg, createElasticHook)
-	if err != nil {
-		return
-	}
-	enableTelemetryState(telemetry, l)
-	return
-}
-
-func enableTelemetryState(telemetry *telemetryState, l *logger) {
-	l.loggerState.telemetry = telemetry
-	// Hook our normal logging to send desired types to telemetry
-	l.AddHook(telemetry.hook)
-	// Wrap current logger Output writer to capture history
-	l.setOutput(telemetry.wrapOutput(l.getOutput()))
-}
-
-func makeTelemetryState(cfg TelemetryConfig, hookFactory hookFactory) (*telemetryState, error) {
-	history := createLogBuffer(cfg.LogHistoryDepth)
-	if cfg.SessionGUID == "" {
-		cfg.SessionGUID = uuid.NewV4().String()
-	}
-	hook, err := createTelemetryHook(cfg, history, hookFactory)
-	if err != nil {
-		return nil, err
-	}
-
-	telemetry := &telemetryState{
-		history,
-		createAsyncHook(hook, 32, 100),
-	}
-	return telemetry, nil
-}
 
 // ReadTelemetryConfigOrDefault reads telemetry config from file or defaults if no config file found.
 func ReadTelemetryConfigOrDefault(dataDir *string, genesisID string) (cfg TelemetryConfig, err error) {
@@ -155,13 +117,7 @@ func EnsureTelemetryConfigCreated(dataDir *string, genesisID string) (TelemetryC
 	return cfg, created, err
 }
 
-// wrapOutput wraps the log writer so we can keep a history of
-// the tail of the file to send with critical telemetry events when logged.
-func (t *telemetryState) wrapOutput(out io.Writer) io.Writer {
-	return t.history.wrapOutput(out)
-}
-
-func (t *telemetryState) logMetrics(l logger, category telemetryspec.Category, metrics telemetryspec.MetricDetails, details interface{}) {
+func logMetrics(l logger, category telemetryspec.Category, metrics telemetryspec.MetricDetails, details interface{}) {
 	if metrics == nil {
 		return
 	}
@@ -169,17 +125,11 @@ func (t *telemetryState) logMetrics(l logger, category telemetryspec.Category, m
 		"metrics": metrics,
 	}).(logger)
 
-	t.logTelemetry(l, buildMessage(string(category), string(metrics.Identifier())), details)
+	logTelemetry(l, buildMessage(string(category), string(metrics.Identifier())), details)
 }
 
-func (t *telemetryState) logEvent(l logger, category telemetryspec.Category, identifier telemetryspec.Event, details interface{}) {
-	t.logTelemetry(l, buildMessage(string(category), string(identifier)), details)
-}
-
-func (t *telemetryState) logStartOperation(l logger, category telemetryspec.Category, identifier telemetryspec.Operation) TelemetryOperation {
-	op := makeTelemetryOperation(t, category, identifier)
-	t.logTelemetry(l, buildMessage(string(category), string(identifier), "Start"), nil)
-	return op
+func logEvent(l logger, category telemetryspec.Category, identifier telemetryspec.Event, details interface{}) {
+	logTelemetry(l, buildMessage(string(category), string(identifier)), details)
 }
 
 func buildMessage(args ...string) string {
@@ -187,8 +137,7 @@ func buildMessage(args ...string) string {
 	return message
 }
 
-// logTelemetry explicitly only sends telemetry events to the cloud.
-func (t *telemetryState) logTelemetry(l logger, message string, details interface{}) {
+func logTelemetry(l logger, message string, details interface{}) {
 	if details != nil {
 		l = l.WithFields(logrus.Fields{
 			"details": details,
@@ -196,21 +145,10 @@ func (t *telemetryState) logTelemetry(l logger, message string, details interfac
 	}
 
 	entry := l.entry.WithFields(Fields{
+		"telemetry":    true,
 		"session":      l.GetTelemetrySession(),
 		"instanceName": l.GetInstanceName(),
 	})
-	// Populate entry like logrus.entry.log() does
-	entry.Time = time.Now()
-	entry.Level = logrus.InfoLevel
-	entry.Message = message
 
-	t.hook.Fire(entry)
-}
-
-func (t *telemetryState) Close() {
-	t.hook.Close()
-}
-
-func (t *telemetryState) Flush() {
-	t.hook.Flush()
+	entry.Info(message)
 }

@@ -136,8 +136,13 @@ type Logger interface {
 	// WithFields logs a message with specific fields
 	WithFields(Fields) Logger
 
-	// Set the logging version (Info by default)
+	// Set the logging level (Info by default)
 	SetLevel(Level)
+
+	IsLevelEnabled(level Level) bool
+
+	// Set the telemetry logging level (Info by default)
+	SetTelemetryLevel(Level)
 
 	// Sets the output target
 	SetOutput(io.Writer)
@@ -145,28 +150,23 @@ type Logger interface {
 	// Sets the logger to JSON Format
 	SetJSONFormatter()
 
-	IsLevelEnabled(level Level) bool
-
 	// source adds file, line and function fields to the event
 	source() *logrus.Entry
 
-	// Adds a hook to the logger
-	AddHook(hook logrus.Hook)
-
-	EnableTelemetry(cfg TelemetryConfig) error
+	EnableTelemetry(enabled bool)
 	GetTelemetryEnabled() bool
 	Metrics(category telemetryspec.Category, metrics telemetryspec.MetricDetails, details interface{})
 	Event(category telemetryspec.Category, identifier telemetryspec.Event)
 	EventWithDetails(category telemetryspec.Category, identifier telemetryspec.Event, details interface{})
-	StartOperation(category telemetryspec.Category, identifier telemetryspec.Operation) TelemetryOperation
 	GetTelemetrySession() string
 	GetTelemetryHostName() string
 	GetInstanceName() string
-	CloseTelemetry()
 }
 
 type loggerState struct {
-	telemetry *telemetryState
+	telemetryEnabled bool
+	loggingLevel     Level
+	telemetryLevel   Level
 }
 
 type logger struct {
@@ -182,102 +182,120 @@ func (l logger) With(key string, value interface{}) Logger {
 }
 
 func (l logger) Debug(args ...interface{}) {
-	l.source().Debug(args...)
+	if l.loggerState.loggingLevel >= Debug {
+		l.source().Debug(args...)
+	}
 }
 
 func (l logger) Debugln(args ...interface{}) {
-	l.source().Debugln(args...)
+	if l.loggerState.loggingLevel >= Debug {
+		l.source().Debugln(args...)
+	}
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
-	l.source().Debugf(format, args...)
+	if l.loggerState.loggingLevel >= Debug {
+		l.source().Debugf(format, args...)
+	}
 }
 
 func (l logger) Info(args ...interface{}) {
-	l.source().Info(args...)
+	if l.loggerState.loggingLevel >= Info {
+		l.source().Info(args...)
+	}
 }
 
 func (l logger) Infoln(args ...interface{}) {
-	l.source().Infoln(args...)
+	if l.loggerState.loggingLevel >= Info {
+		l.source().Infoln(args...)
+	}
 }
 
 func (l logger) Infof(format string, args ...interface{}) {
-	l.source().Infof(format, args...)
+	if l.loggerState.loggingLevel >= Info {
+		l.source().Infof(format, args...)
+	}
 }
 
 func (l logger) Warn(args ...interface{}) {
-	l.source().Warn(args...)
+	if l.loggerState.loggingLevel >= Warn {
+		l.source().Warn(args...)
+	}
 }
 
 func (l logger) Warnln(args ...interface{}) {
-	l.source().Warnln(args...)
+	if l.loggerState.loggingLevel >= Warn {
+		l.source().Warnln(args...)
+	}
 }
 
 func (l logger) Warnf(format string, args ...interface{}) {
-	l.source().Warnf(format, args...)
+	if l.loggerState.loggingLevel >= Warn {
+		l.source().Warnf(format, args...)
+	}
 }
 
 func (l logger) Error(args ...interface{}) {
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Error(args...)
+	if l.loggerState.loggingLevel >= Error {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Error(args...)
+	}
 }
 
 func (l logger) Errorln(args ...interface{}) {
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Errorln(args...)
+	if l.loggerState.loggingLevel >= Error {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Errorln(args...)
+	}
 }
 
 func (l logger) Errorf(format string, args ...interface{}) {
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Errorf(format, args...)
+	if l.loggerState.loggingLevel >= Error {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Errorf(format, args...)
+	}
 }
 
 func (l logger) Fatal(args ...interface{}) {
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Fatal(args...)
+	if l.loggerState.loggingLevel >= Fatal {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Fatal(args...)
+	}
 }
 
 func (l logger) Fatalln(args ...interface{}) {
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Fatalln(args...)
+	if l.loggerState.loggingLevel >= Fatal {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Fatalln(args...)
+	}
 }
 
 func (l logger) Fatalf(format string, args ...interface{}) {
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Fatalf(format, args...)
+	if l.loggerState.loggingLevel >= Fatal {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Fatalf(format, args...)
+	}
 }
 
 func (l logger) Panic(args ...interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			l.FlushTelemetry()
-			panic(r)
-		}
-	}()
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Panic(args...)
+	if l.loggerState.loggingLevel >= Panic {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Panic(args...)
+	}
 }
 
 func (l logger) Panicln(args ...interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			l.FlushTelemetry()
-			panic(r)
-		}
-	}()
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Panicln(args...)
+	if l.loggerState.loggingLevel >= Panic {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Panicln(args...)
+	}
 }
 
 func (l logger) Panicf(format string, args ...interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			l.FlushTelemetry()
-			panic(r)
-		}
-	}()
-	l.source().Errorln(stackPrefix, string(debug.Stack()))
-	l.source().Panicf(format, args...)
+	if l.loggerState.loggingLevel >= Panic {
+		l.source().Errorln(stackPrefix, string(debug.Stack()))
+		l.source().Panicf(format, args...)
+	}
 }
 
 func (l logger) WithFields(fields Fields) Logger {
@@ -288,27 +306,19 @@ func (l logger) WithFields(fields Fields) Logger {
 }
 
 func (l logger) SetLevel(lvl Level) {
-	l.entry.Logger.Level = logrus.Level(lvl)
+	l.loggerState.loggingLevel = lvl
 }
 
 func (l logger) IsLevelEnabled(level Level) bool {
-	return l.entry.Logger.Level >= logrus.Level(level)
+	return l.loggerState.loggingLevel >= level
+}
+
+func (l logger) SetTelemetryLevel(lvl Level) {
+	l.loggerState.telemetryLevel = lvl
 }
 
 func (l logger) SetOutput(w io.Writer) {
-	if l.GetTelemetryEnabled() {
-		l.setOutput(l.loggerState.telemetry.wrapOutput(w))
-	} else {
-		l.setOutput(w)
-	}
-}
-
-func (l logger) setOutput(w io.Writer) {
 	l.entry.Logger.Out = w
-}
-
-func (l logger) getOutput() io.Writer {
-	return l.entry.Logger.Out
 }
 
 func (l logger) SetJSONFormatter() {
@@ -339,10 +349,6 @@ func (l logger) source() *logrus.Entry {
 	return event
 }
 
-func (l logger) AddHook(hook logrus.Hook) {
-	l.entry.Logger.Hooks.Add(hook)
-}
-
 // Base returns the default Logger logging to
 func Base() Logger {
 	return baseLogger
@@ -351,9 +357,14 @@ func Base() Logger {
 // NewLogger returns a new Logger logging to out.
 func NewLogger() Logger {
 	l := logrus.New()
+	l.SetLevel(logrus.DebugLevel)
 	out := logger{
 		logrus.NewEntry(l),
-		&loggerState{},
+		&loggerState{
+			telemetryEnabled: false,
+			loggingLevel:     Info,
+			telemetryLevel:   Info,
+		},
 	}
 	formatter := out.entry.Logger.Formatter
 	tf, ok := formatter.(*logrus.TextFormatter)
@@ -363,15 +374,12 @@ func NewLogger() Logger {
 	return out
 }
 
-func (l logger) EnableTelemetry(cfg TelemetryConfig) (err error) {
-	if l.loggerState.telemetry != nil || !cfg.Enable {
-		return nil
-	}
-	return EnableTelemetry(cfg, &l)
+func (l logger) EnableTelemetry(enabled bool) {
+	l.loggerState.telemetryEnabled = enabled
 }
 
 func (l logger) GetTelemetryEnabled() bool {
-	return l.loggerState.telemetry != nil
+	return l.loggerState.telemetryEnabled
 }
 
 func (l logger) GetTelemetrySession() string {
@@ -387,8 +395,8 @@ func (l logger) GetInstanceName() string {
 }
 
 func (l logger) Metrics(category telemetryspec.Category, metrics telemetryspec.MetricDetails, details interface{}) {
-	if l.loggerState.telemetry != nil {
-		l.loggerState.telemetry.logMetrics(l, category, metrics, details)
+	if l.loggerState.telemetryEnabled {
+		logMetrics(l, category, metrics, details)
 	}
 }
 
@@ -397,26 +405,7 @@ func (l logger) Event(category telemetryspec.Category, identifier telemetryspec.
 }
 
 func (l logger) EventWithDetails(category telemetryspec.Category, identifier telemetryspec.Event, details interface{}) {
-	if l.loggerState.telemetry != nil {
-		l.loggerState.telemetry.logEvent(l, category, identifier, details)
-	}
-}
-
-func (l logger) StartOperation(category telemetryspec.Category, identifier telemetryspec.Operation) TelemetryOperation {
-	if l.loggerState.telemetry != nil {
-		return l.loggerState.telemetry.logStartOperation(l, category, identifier)
-	}
-	return TelemetryOperation{}
-}
-
-func (l logger) CloseTelemetry() {
-	if l.loggerState.telemetry != nil {
-		l.loggerState.telemetry.Close()
-	}
-}
-
-func (l logger) FlushTelemetry() {
-	if l.loggerState.telemetry != nil {
-		l.loggerState.telemetry.Flush()
+	if l.loggerState.telemetryEnabled {
+		logEvent(l, category, identifier, details)
 	}
 }

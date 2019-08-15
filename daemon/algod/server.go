@@ -270,8 +270,6 @@ func (s *Server) Stop() {
 		s.metricServiceStarted = false
 	}
 
-	s.log.CloseTelemetry()
-
 	os.Remove(s.pidFile)
 	os.Remove(s.netFile)
 	os.Remove(s.netListenFile)

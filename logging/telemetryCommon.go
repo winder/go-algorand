@@ -17,28 +17,8 @@
 package logging
 
 import (
-	"sync"
-	"time"
-
-	"github.com/algorand/go-deadlock"
 	"github.com/sirupsen/logrus"
-
-	"github.com/algorand/go-algorand/logging/telemetryspec"
 )
-
-// TelemetryOperation wraps the context for an ongoing telemetry.StartOperation call
-type TelemetryOperation struct {
-	startTime      time.Time
-	category       telemetryspec.Category
-	identifier     telemetryspec.Operation
-	telemetryState *telemetryState
-	pending        int32
-}
-
-type telemetryState struct {
-	history      *logBuffer
-	hook         *asyncTelemetryHook
-}
 
 // TelemetryConfig represents the configuration of Telemetry logging
 type TelemetryConfig struct {
@@ -55,15 +35,3 @@ type TelemetryConfig struct {
 	UserName           string
 	Password           string
 }
-
-type asyncTelemetryHook struct {
-	deadlock.Mutex
-	wrappedHook   logrus.Hook
-	wg            sync.WaitGroup
-	pending       []*logrus.Entry
-	entries       chan *logrus.Entry
-	quit          chan struct{}
-	maxQueueDepth int
-}
-
-type hookFactory func(cfg TelemetryConfig) (logrus.Hook, error)
