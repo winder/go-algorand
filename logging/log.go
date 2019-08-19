@@ -161,6 +161,7 @@ type Logger interface {
 	GetTelemetrySession() string
 	GetTelemetryHostName() string
 	GetInstanceName() string
+	GetChainId() string
 }
 
 type loggerState struct {
@@ -392,6 +393,10 @@ func (l logger) GetTelemetryHostName() string {
 
 func (l logger) GetInstanceName() string {
 	return telemetryConfig.getInstanceName()
+}
+
+func (l logger) GetChainId() string {
+	return telemetryConfig.ChainID
 }
 
 func (l logger) Metrics(category telemetryspec.Category, metrics telemetryspec.MetricDetails, details interface{}) {

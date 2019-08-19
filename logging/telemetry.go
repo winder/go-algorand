@@ -145,9 +145,10 @@ func logTelemetry(l logger, message string, details interface{}) {
 	}
 
 	entry := l.entry.WithFields(Fields{
-		"telemetry":    true,
+		"telemetry":    l.GetTelemetryEnabled(),
 		"session":      l.GetTelemetrySession(),
 		"instanceName": l.GetInstanceName(),
+		"chainID":      l.GetChainId(),
 	})
 
 	entry.Info(message)
