@@ -558,6 +558,9 @@ type Local struct {
 	// The path to the node exporter.
 	NodeExporterPath string
 
+	// The path to the telemetry exporter.
+	TelemetryExporterPath string
+
 	// The fallback DNS resolver address that would be used if the system resolver would fail to retrieve SRV records
 	FallbackDNSResolverAddress string
 

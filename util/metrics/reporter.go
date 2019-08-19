@@ -241,7 +241,7 @@ func (reporter *MetricReporter) tryInvokeNodeExporter(ctx context.Context) {
 
 	reporter.neProcess = proc
 
-	// wait for the process to complete on a separate goroutine, and set the reporter.neProcess varaible to nil once it's done.
+	// wait for the process to complete on a separate goroutine, and set the reporter.neProcess variable to nil once it's done.
 	go func(proc **os.Process) {
 		(*proc).Wait()
 		// status, _ :=

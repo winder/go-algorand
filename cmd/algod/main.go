@@ -156,8 +156,10 @@ func main() {
 	// Enable telemetry hook in daemon to send logs to cloud
 	// If ALGOTEST env variable is set, telemetry is disabled - allows disabling telemetry for tests
 	isTest := os.Getenv("ALGOTEST") != ""
+	var telemetryConfigPtr *logging.TelemetryConfig
 	if !isTest {
 		telemetryConfig, err := logging.EnsureTelemetryConfig(&dataDir, genesis.ID())
+		telemetryConfigPtr = &telemetryConfig
 		if err != nil {
 			fmt.Fprintln(os.Stdout, "error loading telemetry config", err)
 		}
@@ -253,8 +255,13 @@ func main() {
 		// Send a heartbeat event every 10 minutes as a sign of life
 		ticker := time.NewTicker(10 * time.Minute)
 		go func() {
+			exporter := logging.MakeTelemetryExporter(cfg.TelemetryExporterPath, dataDir, telemetryConfigPtr)
 			values := make(map[string]string)
 			for {
+				err := exporter.EnsureRunning()
+				if err != nil {
+					fmt.Println("exporter failed: %s")
+				}
 				metrics.DefaultRegistry().AddMetrics(values)
 
 				heartbeatDetails := telemetryspec.HeartbeatEventDetails{
