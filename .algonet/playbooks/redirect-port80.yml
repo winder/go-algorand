@@ -1,0 +1,26 @@
+- hosts: all
+  tasks:
+    - name: Configure iptables to redirect incoming communication from port 80 to port 4560 and persist this configuration via iptables-persistent and netfilter-persistent
+      shell: |
+        # the ens5 interface is used on EC2 instances as the ethernet adapter interface name.
+        # On other installation is might appear as eth0
+        NETWORK_INTERFACE=ens5
+        STATUSCODE=$(curl --silent --output ./cloudflare_ips-v4.txt --write-out "%{http_code}" https://www.cloudflare.com/ips-v4)
+        if [ "$STATUSCODE" -ne 200 ]; then exit "$STATUSCODE"; fi
+        STATUSCODE=$(curl --silent --output ./cloudflare_ips-v6.txt --write-out "%{http_code}" https://www.cloudflare.com/ips-v6)
+        if [ "$STATUSCODE" -ne 200 ]; then exit "$STATUSCODE"; fi
+
+        for ip in $(cat ./cloudflare_ips-v4.txt); do sudo iptables -A INPUT -i $NETWORK_INTERFACE -p tcp --dport 80 -s "$ip" -j ACCEPT; done
+        for ip in $(cat ./cloudflare_ips-v6.txt); do sudo ip6tables -A INPUT -i $NETWORK_INTERFACE -p tcp --dport 80 -s "$ip" -j ACCEPT; done
+        sudo iptables -A PREROUTING -t nat -i $NETWORK_INTERFACE -p tcp --dport 80 -j REDIRECT --to-port 4560
+        sudo ip6tables -A PREROUTING -t nat -i $NETWORK_INTERFACE -p tcp --dport 80 -j REDIRECT --to-port 4560
+        echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+        echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
+        sudo apt-get -y install iptables-persistent netfilter-persistent
+        sudo netfilter-persistent save
+        sudo netfilter-persistent reload
+        rm -f ./cloudflare_ips-v4.txt ./cloudflare_ips-v6.txt
+
+      no_log: False
+      args:
+        executable: /bin/bash

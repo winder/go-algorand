@@ -1,0 +1,6 @@
+- hosts: all
+  tasks:
+    - name: Delete Remote File
+      file:
+        state: absent
+        path: "{{ lookup('env','REMOTE_FILE') }}"

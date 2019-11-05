@@ -1,0 +1,7 @@
+- hosts: all
+  tasks:
+    - name: Revoke Environment
+      shell: |
+         mkdir -p ~/_algonet/environment
+         rm -rf ~/_algonet/environment/local
+      no_log: False

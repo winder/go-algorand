@@ -1,0 +1,12 @@
+- hosts: name_npn*
+  gather_facts: no
+  tasks:
+    - name: Stop Pingpong
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         killall pingpong
+
+      no_log: False
+      args:
+        executable: /bin/bash

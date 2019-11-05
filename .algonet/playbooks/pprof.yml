@@ -1,0 +1,18 @@
+- hosts: all
+  tasks:
+    - name: Get pprof of node action
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}/data
+         for dd in *; do if [ -f "${dd}/genesis.json" ]; then (curl --silent -o /tmp/${dd}_nodeCpuProf.pprof http://`cat ${dd}/algod.net`/urlAuth/`cat ${dd}/algod.token`/debug/pprof/profile\?seconds=90 &); fi; done
+         sleep 99
+         ls -lt /tmp
+         cd /tmp
+         tar zcf /tmp/nodeCpuProf.pprof.tar.gz *_nodeCpuProf.pprof
+
+      no_log: False
+      args:
+        executable: /bin/bash
+    - fetch:
+        src: /tmp/nodeCpuProf.pprof.tar.gz
+        dest: /tmp/nodeCpuProf

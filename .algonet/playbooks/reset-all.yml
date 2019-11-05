@@ -1,0 +1,18 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Resets all Algorand Nodes to post-install state (delete ledgers, logs/archives, wallets)
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         ./goal node stop $(./find-nodes.sh data)
+         (pkill algod; pkill algoh; pkill kmd; pkill node_exporter) || true
+         for DD in data/*/; do if [ -f ${DD}/genesis.json ]; then rm ${DD}/$(head -n 1 ${DD}/wallet-genesis.id)/* && rm -rf ${DD}/kmd-v* && rm -rf ${DD}/goal.cache && rm -rf ${DD}/backup; fi; done
+         find . -name "*.log" -type f -delete
+         find . -name "*.cdv" -type f -delete
+         find . -name "*.archive" -type f -delete
+         for DD in data/*/; do if [ -f ${DD}/genesis.json ]; then cp ${DD}/*.*key ${DD}/$(head -n 1 ${DD}/wallet-genesis.id)/ && ./goal account importrootkey -d ${DD} -u; fi; done
+
+      no_log: False
+      args:
+        executable: /bin/bash

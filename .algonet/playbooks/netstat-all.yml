@@ -1,0 +1,13 @@
+- hosts: all
+  tasks:
+    - name: Get pprof of node action
+      shell: |
+         source ~/_algonet/environment/identity
+         (netstat -anp | grep algod | grep ESTABLISHED > "/tmp/netstat.txt") || true
+
+      no_log: False
+      args:
+        executable: /bin/bash
+    - fetch:
+        src: /tmp/netstat.txt
+        dest: ~/netstat

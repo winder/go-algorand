@@ -1,0 +1,17 @@
+- hosts: name_npn*
+  gather_facts: no
+  tasks:
+    - name: Stop Pingpong
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         killall pingpong
+         cd /tmp
+         tar jcf pingpong_logs.tar.bz2 pingpong_*.log
+
+      no_log: False
+      args:
+        executable: /bin/bash
+    - fetch:
+        src: /tmp/pingpong_logs.tar.bz2
+        dest: /tmp/pingponglogs

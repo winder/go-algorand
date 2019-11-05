@@ -1,0 +1,11 @@
+- hosts: all
+  tasks:
+    - name: Copies partkey/rootkey files into ledger folder and imports rootkeys in all Algorand Nodes, similar to update.sh
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         for DD in data/*/; do if [ -f ${DD}/genesis.json ]; then cp ${DD}/*.*key ${DD}/$(head -n 1 ${DD}/wallet-genesis.id)/ && ./goal account importrootkey -d ${DD} -u; fi; done
+
+      no_log: False
+      args:
+        executable: /bin/bash

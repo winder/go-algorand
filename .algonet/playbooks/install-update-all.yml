@@ -1,0 +1,22 @@
+- hosts: all
+  vars:
+    AWS_ACCESS_KEY_ID:     "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+    AWS_SECRET_ACCESS_KEY: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+    S3_RELEASE_BUCKET:     "{{ lookup('env','S3_RELEASE_BUCKET') }}"
+  tasks:
+    - fail:
+        msg: Some of the AWS variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_RELEASE_BUCKET are undefined
+      when: (AWS_ACCESS_KEY_ID|length == 0) or (AWS_SECRET_ACCESS_KEY|length == 0) or (S3_RELEASE_BUCKET|length == 0)
+    - name: Installs available updates on all nodes
+      shell: |
+         export AWS_ACCESS_KEY_ID={{ AWS_ACCESS_KEY_ID|quote }}
+         export AWS_SECRET_ACCESS_KEY={{ AWS_SECRET_ACCESS_KEY|quote }}
+         export S3_RELEASE_BUCKET={{ S3_RELEASE_BUCKET|quote }}
+
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         ./update.sh $(./find-nodes.sh data) -b $S3_RELEASE_BUCKET
+
+      no_log: False
+      args:
+        executable: /bin/bash

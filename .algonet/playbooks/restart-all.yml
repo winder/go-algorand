@@ -1,0 +1,12 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Restart all Algorand Nodes
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         ./goal node restart $(./find-nodes.sh data)
+
+      no_log: False
+      args:
+        executable: /bin/bash

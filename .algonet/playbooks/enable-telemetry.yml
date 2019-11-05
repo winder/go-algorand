@@ -1,0 +1,11 @@
+- hosts: all
+  tasks:
+    - name: Configure Telemetry on all Nodes
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         ./diagcfg telemetry name -n ${NODECFGHOST}
+
+      no_log: False
+      args:
+        executable: /bin/bash

@@ -1,0 +1,46 @@
+- hosts: all
+  tasks:
+    - name: Installs available updates on all nodes
+      shell: |
+        echo "TEST_PACKAGE_FILE: {{ lookup('env','TEST_PACKAGE_FILE') }}"
+    - name: Upload test files
+      unarchive:
+        src: "{{ lookup('env','TEST_PACKAGE_FILE') }}"
+        dest: ~/
+    - name: Check node status
+      shell: |
+        source ~/_algonet/environment/identity
+        cd ~/algorand/${NETWORK}
+        ls -R
+        ./goal node status $(./find-nodes.sh data)
+        ls -R ~/test
+#        sleep 2m
+#    - name: Install expect
+#      become: true
+#      apt:
+#        name: expect
+#        state: present
+#
+#    - command: apt-get update
+#      sudo: yes
+#
+#    - name: install expect
+#      apt: pkg=expect update_cache=yes
+#      sudo: yes
+
+    - name: Run expect test
+      shell: |
+        echo "running expect test"
+        source ~/_algonet/environment/identity
+        PATH=$PATH:~/algorand/${NETWORK}
+        cd /home/ubuntu/test/e2e-go/cli/goal/cicd_expect/
+        expect -f goalAlgonetStatusTest.exp ~/algorand/${NETWORK} ~/algorand/${NETWORK} > temp.out
+        cat temp.out
+      no_log: False
+      args:
+        executable: /bin/bash
+      register: shell_result
+    - debug:
+        var: shell_result.stderr
+
+

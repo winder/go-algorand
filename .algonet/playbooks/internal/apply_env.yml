@@ -1,0 +1,21 @@
+- hosts: all
+  tasks:
+    - name: Create Environment drop
+      shell: |
+         mkdir -p ~/_algonet/environment
+         rm -rf ~/_algonet/environment/local
+      no_log: False
+
+    - name: Copy File to Remote
+      copy:
+        src: "{{ lookup('env','LOCAL_FILE') }}"
+        dest: "~/_algonet/environment/local"
+        mode: 0644
+
+    - name: Validate Environment
+      shell: |
+         source ~/_algonet/environment/local
+         echo "Environment Exported SSM: $ALGONET_ENVIRONMENT_TIMESTAMP"
+      args:
+        executable: /bin/bash
+      no_log: False

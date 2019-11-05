@@ -1,0 +1,30 @@
+- hosts: role_relay
+  tasks:
+    - name: Get ledger sqlite
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}/data
+         rm -rf /tmp/ledgers
+         mkdir -p /tmp/ledgers
+         for dd in *; do if [ -f "${dd}/genesis.json" ]; then
+         (cd ${dd}; for gn in *; do
+           if [ -f "${gn}/ledger.sqlite" ]; then
+             sqlite3 ${gn}/ledger.sqlite ".backup /tmp/ledgers/${dd}_${gn}_ledger.sqlite"
+           fi
+           if [ -f "${gn}/ledger.block.sqlite" ]; then
+             sqlite3 ${gn}/ledger.block.sqlite ".backup /tmp/ledgers/${dd}_${gn}_ledger.block.sqlite"
+           fi
+           if [ -f "${gn}/ledger.tracker.sqlite" ]; then
+             sqlite3 ${gn}/ledger.tracker.sqlite ".backup /tmp/ledgers/${dd}_${gn}_ledger.tracker.sqlite"
+           fi
+         done)
+         fi; done
+         cd /tmp
+         tar zcf ledgers.tar.gz ledgers
+
+      no_log: False
+      args:
+        executable: /bin/bash
+    - fetch:
+        src: /tmp/ledgers.tar.gz
+        dest: /tmp/ledgers

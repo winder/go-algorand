@@ -1,0 +1,11 @@
+- hosts: all
+  tasks:
+    - name: Imports root keys for all Algorand Nodes (like update.sh does)
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         for DD in data/*/; do if [ -f ${DD}/genesis.json ]; then ./goal account importrootkey -d ${DD} -u; fi; done
+
+      no_log: False
+      args:
+        executable: /bin/bash

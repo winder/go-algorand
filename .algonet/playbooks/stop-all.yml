@@ -1,0 +1,13 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Stop all Algorand Nodes
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}
+         ./goal node stop $(./find-nodes.sh data)
+         (pkill algod; pkill algoh; pkill kmd; pkill node_exporter) || true
+
+      no_log: False
+      args:
+        executable: /bin/bash

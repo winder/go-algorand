@@ -1,0 +1,13 @@
+- hosts: name_npn*
+  gather_facts: no
+  tasks:
+    - name: Start pingpong transactions on end-user nodes
+      shell: |
+         source ~/_algonet/environment/identity
+         cd ~/algorand/${NETWORK}/data
+         if [ "{{playbook_args}}" == "" ]; then PPARGS="--rest 1 --run 15 --refresh 1 --numaccounts 500"; else PPARGS="{{playbook_args}}"; fi
+         for dd in *; do if [ -f "${dd}/genesis.json" ]; then (cd ~/algorand/${NETWORK} && nohup ./pingpong run -d data/${dd} ${PPARGS} > /tmp/pingpong_${dd}.log 2>&1 &); fi; done
+
+      no_log: False
+      args:
+        executable: /bin/bash
