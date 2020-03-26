@@ -101,7 +101,8 @@ func (c *Client) chooseParticipation(address basics.Address, round basics.Round)
 	return
 }
 
-func participationKeysPath(dataDir string, address basics.Address, firstValid, lastValid basics.Round) (string, error) {
+// ParticipationKeysPath computes the directory where participation keys should be placed.
+func ParticipationKeysPath(dataDir string, address basics.Address, firstValid, lastValid basics.Round) (string, error) {
 	// Build /<dataDir>/<genesisID>/<address>.<first_round>.<last_round>.partkey
 	first := uint64(firstValid)
 	last := uint64(lastValid)
@@ -150,7 +151,7 @@ func (c *Client) GenParticipationKeysTo(address string, firstValid, lastValid, k
 		outDir = filepath.Join(c.DataDir(), genID)
 	}
 	// Connect to the database
-	partKeyPath, err := participationKeysPath(outDir, parsedAddr, firstRound, lastRound)
+	partKeyPath, err := ParticipationKeysPath(outDir, parsedAddr, firstRound, lastRound)
 	if err != nil {
 		return
 	}
@@ -197,7 +198,7 @@ func (c *Client) InstallParticipationKeys(inputfile string) (part account.Partic
 		return
 	}
 
-	newdbpath, err := participationKeysPath(outDir, partkey.Parent, partkey.FirstValid, partkey.LastValid)
+	newdbpath, err := ParticipationKeysPath(outDir, partkey.Parent, partkey.FirstValid, partkey.LastValid)
 	if err != nil {
 		return
 	}

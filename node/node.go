@@ -368,7 +368,7 @@ func (node *AlgorandFullNode) Stop() {
 
 // note: unlike the other two functions, this accepts a whole filename
 func (node *AlgorandFullNode) getExistingPartHandle(filename string) (db.Accessor, error) {
-	filename = filepath.Join(node.rootDir, node.genesisID, filename)
+	filename = filepath.Join(node.ParticipationKeyDirectory(), filename)
 
 	_, err := os.Stat(filename)
 	if err == nil {
@@ -610,9 +610,14 @@ func (node *AlgorandFullNode) checkForParticipationKeys() {
 	}
 }
 
+// ParticipationKeyDirectory is where participation keys are stored.
+func (node *AlgorandFullNode) ParticipationKeyDirectory() string {
+	return filepath.Join(node.rootDir, node.genesisID)
+}
+
 func (node *AlgorandFullNode) loadParticipationKeys() error {
 	// Generate a list of all potential participation key files
-	genesisDir := filepath.Join(node.rootDir, node.genesisID)
+	genesisDir := node.ParticipationKeyDirectory()
 	files, err := ioutil.ReadDir(genesisDir)
 	if err != nil {
 		return fmt.Errorf("AlgorandFullNode.loadPartitipationKeys: could not read directory %v: %v", genesisDir, err)

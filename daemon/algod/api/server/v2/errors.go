@@ -13,4 +13,5 @@ var (
 	errTransactionNotFound              = "couldn't find the required transaction in the required range"
 	errServiceShuttingDown              = "operation aborted as server is shutting down"
 	errRequestedRoundInUnsupportedRound = "requested round would reach only after the protocol upgrade which isn't supported"
+	errFailedToGeneratePartkey          = "could not generate participation keys"
 )

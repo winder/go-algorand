@@ -389,7 +389,7 @@ type RegisterParticipationKeysParams struct {
 	KeyDilution *uint64 `json:"key-dilution,omitempty"`
 
 	// The last round for which the generated participation keys will be valid.
-	RoundLastValid *string `json:"round-last-valid,omitempty"`
+	RoundLastValid *uint64 `json:"round-last-valid,omitempty"`
 
 	// Don't wait for transaction to commit.
 	NoWait *bool `json:"no-wait,omitempty"`

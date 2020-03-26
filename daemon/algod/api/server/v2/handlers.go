@@ -12,11 +12,14 @@ import (
 	"github.com/algorand/go-algorand/config"
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/daemon/algod/api/server/v2/generated"
+	"github.com/algorand/go-algorand/data/account"
 	"github.com/algorand/go-algorand/data/basics"
 	"github.com/algorand/go-algorand/data/transactions"
+	"github.com/algorand/go-algorand/libgoal"
 	"github.com/algorand/go-algorand/logging"
 	"github.com/algorand/go-algorand/node"
 	"github.com/algorand/go-algorand/protocol"
+	"github.com/algorand/go-algorand/util/db"
 )
 
 // Handlers is an implementation to the V2 route handler interface defined by the generated code.
@@ -29,15 +32,60 @@ type Handlers struct {
 // RegisterParticipationKeys registers participation keys.
 // (POST /v2/register-participation-keys/{address})
 func (v2 *Handlers) RegisterParticipationKeys(ctx echo.Context, address string, params generated.RegisterParticipationKeysParams) error {
-	// TODO
-	return nil
+	parsedAddr, err := basics.UnmarshalChecksumAddress(address)
+	if err != nil {
+		return returnError(ctx, http.StatusBadRequest, err, errFailedToParseAddress, v2.Log)
+	}
+
+	stat, err := v2.Node.Status()
+	if err != nil {
+		return returnError(ctx, http.StatusInternalServerError, err, errFailedRetrievingNodeStatus, v2.Log)
+	}
+
+	// Save keys to the participation key directory
+	outDir := v2.Node.ParticipationKeyDirectory()
+
+	firstRound := stat.LastRound
+	lastRound := firstRound + 19200 // TODO: Should lastValid be required? If no, what should be the default?
+	if params.RoundLastValid != nil {
+		lastRound = basics.Round(*params.RoundLastValid)
+	}
+
+	// TODO: What is the right error message here?
+	proto, ok := config.Consensus[stat.LastVersion]
+	if !ok {
+		return returnError(ctx, http.StatusInternalServerError, err, errRequestedRoundInUnsupportedRound, v2.Log)
+	}
+
+	// Connect to the database
+	partKeyPath, err := libgoal.ParticipationKeysPath(outDir, parsedAddr, firstRound, lastRound)
+	if err != nil {
+		return nil
+	}
+	partdb, err := db.MakeErasableAccessor(partKeyPath)
+	if err != nil {
+		return nil
+	}
+
+	keyDilution := proto.DefaultKeyDilution
+	if params.KeyDilution != nil {
+		keyDilution = *params.KeyDilution
+	}
+
+	// Fill the database with new participation keys
+	_, err = account.FillDBWithParticipationKeys(partdb, parsedAddr, firstRound, lastRound, keyDilution)
+	if err != nil {
+		return returnError(ctx, http.StatusInternalServerError, err, errFailedToGeneratePartkey, v2.Log)
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 // ShutdownNode shuts down the node.
 // (POST /v2/shutdown)
 func (v2 *Handlers) ShutdownNode(ctx echo.Context, params generated.ShutdownNodeParams) error {
-	// TODO
-	return nil
+	v2.Node.Stop()
+	return ctx.NoContent(http.StatusOK)
 }
 
 // AccountInformation gets account information for a given account.
