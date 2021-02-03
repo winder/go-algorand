@@ -443,6 +443,9 @@ func (v2 *Handlers) PendingTransactionInformation(ctx echo.Context, txid string,
 	// Encoding wasn't working well without embedding "real" objects.
 	response := struct {
 		AssetIndex         *uint64                        `codec:"asset-index,omitempty"`
+		Test1Nil *uint64                        `codec:"test-1-nil,omitempty"`
+		Test2ZeroUninit *uint64                       `codec:"test-2-uninit,omitempty"`
+		Test3Zero *uint64                    `codec:"test-2-zero-ptr,omitempty"`
 		AssetClosingAmount *uint64                        `codec:"asset-closing-amount,omitempty"`
 		ApplicationIndex   *uint64                        `codec:"application-index,omitempty"`
 		CloseRewards       *uint64                        `codec:"close-rewards,omitempty"`
@@ -466,6 +469,13 @@ func (v2 *Handlers) PendingTransactionInformation(ctx echo.Context, txid string,
 	if txn.ConfirmedRound != 0 {
 		r := uint64(txn.ConfirmedRound)
 		response.ConfirmedRound = &r
+
+		var z1 uint64
+		var z2 uint64 = uint64(0)
+
+		response.Test1Nil = nil
+		response.Test2ZeroUninit = &z1
+		response.Test3Zero= &z2
 
 		response.ClosingAmount = &txn.ApplyData.ClosingAmount.Raw
 		response.AssetClosingAmount = &txn.ApplyData.AssetClosingAmount
