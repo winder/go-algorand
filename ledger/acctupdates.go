@@ -1207,64 +1207,45 @@ func accountHashBuilder(addr basics.Address, accountData basics.AccountData, enc
 // as part of the initialization, it tests the current database schema version, and perform upgrade
 // procedures to bring it up to the database schema supported by the binary.
 func (au *accountUpdates) accountsInitialize(ctx context.Context, tx *sql.Tx) (basics.Round, error) {
-	// check current database version.
-	dbVersion, err := db.GetUserVersion(ctx, tx)
+	// Wrapper functions to coerce the existing functions into the new interface.
+	var newDatabase bool
+	var err error
+	migrations := []db.Migration{
+		func(ctx context.Context, tx *sql.Tx, _ bool) error {
+			_, newDatabase, err = au.upgradeDatabaseSchema0(ctx, tx)
+			return err
+		},
+		func(ctx context.Context, tx *sql.Tx, _ bool) error {
+			_, err = au.upgradeDatabaseSchema1(ctx, tx, newDatabase)
+			return err
+		},
+		func(ctx context.Context, tx *sql.Tx, _ bool) error {
+			_, err = au.upgradeDatabaseSchema2(ctx, tx, newDatabase)
+			return err
+		},
+		func(ctx context.Context, tx *sql.Tx, _ bool) error {
+			_, err = au.upgradeDatabaseSchema3(ctx, tx, newDatabase)
+			return err
+		},
+		func(ctx context.Context, tx *sql.Tx, _ bool) error {
+			_, err = au.upgradeDatabaseSchema4(ctx, tx, newDatabase)
+			return err
+		},
+	}
+	err = db.InitializeWithContext(ctx, tx, migrations)
 	if err != nil {
-		return 0, fmt.Errorf("accountsInitialize unable to read database schema version : %v", err)
-	}
+		switch err.(type) {
+		default:
+			return 0, err
+		case *db.UnknownVersionErr:
+			// if database version is greater than supported by current binary, write a warning. This would keep the existing
+			// fallback behavior where we could use an older binary iff the schema happen to be backward compatible.
+			au.log.Warnf(err.Error())
 
-	// if database version is greater than supported by current binary, write a warning. This would keep the existing
-	// fallback behavior where we could use an older binary iff the schema happen to be backward compatible.
-	if dbVersion > accountDBVersion {
-		au.log.Warnf("accountsInitialize database schema version is %d, but algod supports only %d", dbVersion, accountDBVersion)
-	}
-
-	if dbVersion < accountDBVersion {
-		au.log.Infof("accountsInitialize upgrading database schema from version %d to version %d", dbVersion, accountDBVersion)
-		// newDatabase is determined during the tables creations. If we're filling the database with accounts,
-		// then we set this variable to true, allowing some of the upgrades to be skipped.
-		var newDatabase bool
-		for dbVersion < accountDBVersion {
-			au.log.Infof("accountsInitialize performing upgrade from version %d", dbVersion)
-			// perform the initialization/upgrade
-			switch dbVersion {
-			case 0:
-				dbVersion, newDatabase, err = au.upgradeDatabaseSchema0(ctx, tx)
-				if err != nil {
-					au.log.Warnf("accountsInitialize failed to upgrade accounts database (ledger.tracker.sqlite) from schema 0 : %v", err)
-					return 0, err
-				}
-			case 1:
-				dbVersion, err = au.upgradeDatabaseSchema1(ctx, tx, newDatabase)
-				if err != nil {
-					au.log.Warnf("accountsInitialize failed to upgrade accounts database (ledger.tracker.sqlite) from schema 1 : %v", err)
-					return 0, err
-				}
-			case 2:
-				dbVersion, err = au.upgradeDatabaseSchema2(ctx, tx, newDatabase)
-				if err != nil {
-					au.log.Warnf("accountsInitialize failed to upgrade accounts database (ledger.tracker.sqlite) from schema 2 : %v", err)
-					return 0, err
-				}
-			case 3:
-				dbVersion, err = au.upgradeDatabaseSchema3(ctx, tx, newDatabase)
-				if err != nil {
-					au.log.Warnf("accountsInitialize failed to upgrade accounts database (ledger.tracker.sqlite) from schema 3 : %v", err)
-					return 0, err
-				}
-			case 4:
-				dbVersion, err = au.upgradeDatabaseSchema4(ctx, tx, newDatabase)
-				if err != nil {
-					au.log.Warnf("accountsInitialize failed to upgrade accounts database (ledger.tracker.sqlite) from schema 4 : %v", err)
-					return 0, err
-				}
-			default:
-				return 0, fmt.Errorf("accountsInitialize unable to upgrade database from schema version %d", dbVersion)
-			}
 		}
-
-		au.log.Infof("accountsInitialize database schema upgrade complete")
 	}
+
+	// The DB is now up-to-date.
 
 	rnd, hashRound, err := accountsRound(tx)
 	if err != nil {

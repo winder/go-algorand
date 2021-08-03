@@ -691,7 +691,7 @@ func TestLargeAccountCountCatchpointGeneration(t *testing.T) {
 	}
 }
 
-// The TestAcctUpdatesUpdatesCorrectness conduct a correctless test for the accounts update in the following way -
+// The TestAcctUpdatesUpdatesCorrectness conduct a correctness test for the accounts update in the following way -
 // Each account is initialized with 100 algos.
 // On every round, each account move variable amount of funds to an accumulating account.
 // The deltas for each accounts are picked by using the lookup method.
