@@ -1244,6 +1244,7 @@ func (au *accountUpdates) accountsInitialize(ctx context.Context, tx *sql.Tx) (b
 	}
 
 	// The DB is now up-to-date.
+	au.log.Infof("accountsInitialize database schema upgrade complete")
 
 	rnd, hashRound, err := accountsRound(tx)
 	if err != nil {
