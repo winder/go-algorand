@@ -45,13 +45,13 @@ func InitializeWithContext(ctx context.Context, tx *sql.Tx, migrations []Migrati
 	if dbVersion < version {
 		var newDatabase bool
 		for i := dbVersion; i < version; i++ {
-			if dbVersion == 0 {
-				newDatabase = true
+			err = migrations[i](ctx, tx, newDatabase)
+			if err != nil && err != NoOpMigration {
+				return MakeUpgradeFailureErr(dbVersion, i)
 			}
 
-			err = migrations[i](ctx, tx, newDatabase)
-			if err != nil {
-				return MakeUpgradeFailureErr(dbVersion, i)
+			if i == 0 && err != NoOpMigration {
+				newDatabase = true
 			}
 
 			// update version
@@ -67,6 +67,9 @@ func InitializeWithContext(ctx context.Context, tx *sql.Tx, migrations []Migrati
 
 // UnableToReadErr is returned when the accessor cannot be read.
 var UnableToReadErr error
+
+// NoOpMigration is returned when there was no work for the migration to perform.
+var NoOpMigration error
 
 // UnknownVersionErr is returned when a migration to the current version is not available.
 type UnknownVersionErr struct {

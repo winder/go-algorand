@@ -1207,32 +1207,30 @@ func accountHashBuilder(addr basics.Address, accountData basics.AccountData, enc
 // as part of the initialization, it tests the current database schema version, and perform upgrade
 // procedures to bring it up to the database schema supported by the binary.
 func (au *accountUpdates) accountsInitialize(ctx context.Context, tx *sql.Tx) (basics.Round, error) {
-	// Wrapper functions to coerce the existing functions into the new interface.
-	var newDatabase bool
-	var err error
+	// Wrapper functions to coerce the existing migration functions into the new interface.
+	// TODO: update upgradeDatabaseSchema* functions instead of having wrappers. This was
+	//       skipped to simplify the code review.
+	wrapper := func(schemaFunc func(ctx context.Context, tx *sql.Tx, newDatabase bool) (int32, error)) db.Migration {
+		return func(ctx context.Context, tx *sql.Tx, newDatabase bool) error {
+			_, err := schemaFunc(ctx, tx, newDatabase)
+			return err
+		}
+	}
+
 	migrations := []db.Migration{
 		func(ctx context.Context, tx *sql.Tx, _ bool) error {
-			_, newDatabase, err = au.upgradeDatabaseSchema0(ctx, tx)
+			_, newDatabase, err := au.upgradeDatabaseSchema0(ctx, tx)
+			if !newDatabase {
+				return db.NoOpMigration
+			}
 			return err
 		},
-		func(ctx context.Context, tx *sql.Tx, _ bool) error {
-			_, err = au.upgradeDatabaseSchema1(ctx, tx, newDatabase)
-			return err
-		},
-		func(ctx context.Context, tx *sql.Tx, _ bool) error {
-			_, err = au.upgradeDatabaseSchema2(ctx, tx, newDatabase)
-			return err
-		},
-		func(ctx context.Context, tx *sql.Tx, _ bool) error {
-			_, err = au.upgradeDatabaseSchema3(ctx, tx, newDatabase)
-			return err
-		},
-		func(ctx context.Context, tx *sql.Tx, _ bool) error {
-			_, err = au.upgradeDatabaseSchema4(ctx, tx, newDatabase)
-			return err
-		},
+		wrapper(au.upgradeDatabaseSchema1),
+		wrapper(au.upgradeDatabaseSchema2),
+		wrapper(au.upgradeDatabaseSchema3),
+		wrapper(au.upgradeDatabaseSchema4),
 	}
-	err = db.InitializeWithContext(ctx, tx, migrations)
+	err := db.InitializeWithContext(ctx, tx, migrations)
 	if err != nil {
 		switch err.(type) {
 		default:
