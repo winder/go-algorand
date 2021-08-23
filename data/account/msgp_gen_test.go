@@ -34,7 +34,6 @@ func TestMarshalUnmarshalparticipationIDData(t *testing.T) {
 }
 
 func TestRandomizedEncodingparticipationIDData(t *testing.T) {
-	partitiontest.PartitionTest(t)
 	protocol.RunEncodingTest(t, &participationIDData{})
 }
 
