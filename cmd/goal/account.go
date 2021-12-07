@@ -1009,6 +1009,7 @@ func generateAndRegisterPartKey(address string, currentRound, keyLastValidRound,
 	if err != nil {
 		return err
 	}
+	fmt.Printf("  Generated participation key for %s (Valid %d - %d)\n", address, currentRound, keyLastValidRound)
 
 	// Now register it as our new online participation key
 	goOnline := true
