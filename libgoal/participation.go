@@ -19,7 +19,6 @@ package libgoal
 import (
 	"fmt"
 	"io/ioutil"
-	"math"
 	"os"
 	"path/filepath"
 
