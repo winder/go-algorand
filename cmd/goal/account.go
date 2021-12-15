@@ -841,7 +841,7 @@ func changeAccountOnlineStatus(acct string, part *algodAcct.Participation, goOnl
 	var err error
 	if goOnline {
 		utx = part.GenerateRegistrationTransaction(
-			basics.MicroAlgos{Raw:fee},
+			basics.MicroAlgos{Raw: fee},
 			basics.Round(firstTxRound),
 			basics.Round(lastTxRound),
 			leaseBytes)
@@ -903,7 +903,6 @@ var addParticipationKeyCmd = &cobra.Command{
 		reportInfof("Participation key generation successful")
 	},
 }
-
 
 var installParticipationKeyCmd = &cobra.Command{
 	Use:   "installpartkey",
