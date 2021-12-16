@@ -18,6 +18,7 @@ package transactions
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -168,9 +169,15 @@ func TestCloseOnError(t *testing.T) {
 	// get the current round for partkey creation
 	_, curRound := fixture.GetBalanceAndRound(initiallyOnline)
 
+	tempDir := os.TempDir()
+	var partkeyFile string
+	_, partkeyFile, err = client.GenParticipationKeysTo(initiallyOffline, 0, curRound+1000, 0, tempDir)
+	defer os.Remove(partkeyFile)
+
 	// make a participation key for initiallyOffline
-	_, _, err = client.GenParticipationKeys(initiallyOffline, 0, curRound+1000, 0)
+	_, err = client.AddParticipationKey(partkeyFile)
 	a.NoError(err)
+
 	// check duplicate keys does not crash
 	_, _, err = client.GenParticipationKeys(initiallyOffline, 0, curRound+1000, 0)
 	errMsg := fmt.Sprintf("ParticipationKeys exist for the range 0 to %d", curRound+1000)
