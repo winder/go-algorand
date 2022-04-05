@@ -17,10 +17,23 @@
 package algod
 
 import (
+	"github.com/algorand/go-algorand/data/basics"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/node"
+)
+
+var (
+	AddressList = []string{
+		//"ZONEGRWBV3Q7JA6RHAN4EMAX6ICIVZX2C6U65DCNHYLIL4PUBB7O6DOSBI",
+		//"XFYAYSEGQIY2J3DCGGXCPXY5FGHSVKM3V4WCNYCLKDLHB7RYDBU233QB5M",
+		//"WNEJFT6HTAX3CQ6YOPIY65AKYCBQM6BLV4S5OP54VH76OP33LOL2MYGSIM",
+		//"GULDQIEZ2CUPBSHKXRWUW7X3LCYL44AI5GGSHHOQDGKJAZ2OANZJ43S72U",
+		"57QZ4S7YHTWPRAM3DQ2MLNSVLAQB7DTK4D7SUNRIEFMRGOU7DMYFGF55BY",
+		//"ETGSQKACKC56JWGMDAEP5S2JVQWRKTQUVKCZTMPNUGZLDVCWPY63LSI3H4",
+		"J4AEINCSSLDA7LNBNWM4ZXFCTLTOZT5LG3F5BLMFPJYGFWVCMU37EZI2AM",
+	}
 )
 
 type NetworkMsg struct {
@@ -49,6 +62,31 @@ func GetStatusCmd(s *Server) tea.Cmd {
 			Status: s,
 			Error:  err,
 		}
+	}
+}
+
+type AccountStatusMsg map[basics.Address]uint64
+
+func GetAccountStatusMsg(s *Server) tea.Cmd {
+	return func() tea.Msg {
+		currentNode := GetNode(s)
+		ledger := currentNode.Ledger()
+
+		rval := make(AccountStatusMsg)
+
+		for _, a := range AddressList {
+			currentAddress, err := basics.UnmarshalChecksumAddress(a)
+
+			if err != nil {
+				continue
+			}
+
+			record, _, _, err := ledger.LookupLatest(currentAddress)
+
+			rval[currentAddress] = record.MicroAlgos.Raw
+		}
+
+		return rval
 	}
 }
 
