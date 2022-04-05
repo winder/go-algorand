@@ -13,12 +13,13 @@ import (
 
 const (
 	// MaxTopBoxHeight is the height of the top boxes. Hard coded to avoid dynamic margins.
-	MaxTopBoxHeight = 18
+	MaxTopBoxHeight = 20
 	initialWidth    = 80
 	initialHeight   = 50
 )
 
 type Model struct {
+	Server        *algod.Server
 	Status        status.Model
 	Accounts      accounts.Model
 	BlockExplorer explorer.Model
@@ -33,6 +34,7 @@ type Model struct {
 func New(s *algod.Server) Model {
 	styles := style.DefaultStyles()
 	return Model{
+		Server:        s,
 		styles:        styles,
 		Status:        status.NewModel(s),
 		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight /* Max(status.height, account.height) */),

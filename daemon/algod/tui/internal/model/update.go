@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -13,6 +14,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, constants.Keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, constants.Keys.Catchup):
+			return m, algod.StartFastCatchup(m.Server)
+		case key.Matches(msg, constants.Keys.AbortCatchup):
+			return m, algod.StopFastCatchup(m.Server)
 		}
 
 	case tea.WindowSizeMsg:
