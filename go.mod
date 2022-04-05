@@ -12,6 +12,7 @@ require (
 	github.com/algorand/oapi-codegen v1.3.7
 	github.com/algorand/websocket v1.4.5
 	github.com/aws/aws-sdk-go v1.16.5
+	github.com/calyptia/go-bubble-table v0.1.0 // indirect
 	github.com/charmbracelet/bubbles v0.10.3 // indirect
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.5.0 // indirect

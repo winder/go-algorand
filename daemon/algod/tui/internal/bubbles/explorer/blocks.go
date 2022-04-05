@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
+	table "github.com/calyptia/go-bubble-table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/reflow/truncate"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 	"github.com/algorand/go-algorand/data/bookkeeping"
@@ -20,44 +20,35 @@ type blockItem struct {
 	*bookkeeping.Block
 }
 
-func (i blockItem) Title() string {
-	return fmt.Sprintf("Txs: %-5d Asset: %-5d App: %-5d", len(i.Payset), 99, 101)
-}
+// Hacked these in to workaround missing style options in table model
+var inactive = lipgloss.NewStyle()
+var active = inactive.Copy().Foreground(lipgloss.Color("#B083EA")).Bold(true)
+var key = inactive.Copy().Width(10).Foreground(lipgloss.Color("#A3A322")).Bold(true)
 
-func (i blockItem) FilterValue() string { return i.Title() }
-
-// itemDelegate is used for rendering the list item.
-type itemDelegate struct {
-	style *style.Styles
-}
-
-func (d itemDelegate) Height() int                               { return 1 }
-func (d itemDelegate) Spacing() int                              { return 0 }
-func (d itemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(blockItem)
-	if !ok {
-		return
-	}
-
-	leftMargin := d.style.BottomListItemSelector.GetMarginLeft() +
-		d.style.BottomListItemSelector.GetWidth() +
-		d.style.BottomListItemKey.GetMarginLeft() +
-		d.style.BottomListItemKey.GetWidth() +
-		d.style.BottomListItemInactive.GetMarginLeft()
-	title := truncate.StringWithTail(i.Title(), uint(m.Width()-leftMargin), "…")
-	id := strconv.FormatUint(uint64(i.Round()), 10)
-
-	if index == m.Index() {
-		fmt.Fprint(w, d.style.BottomListItemSelector.Render(">")+
-			d.style.BottomListItemKey.Bold(true).Render(id)+
-			d.style.BottomListItemActive.Render(title))
+func (i blockItem) Render(w io.Writer, model table.Model, index int) {
+	var cursor string
+	if index == model.Cursor() {
+		cursor = "> "
 	} else {
-		fmt.Fprint(w, d.style.BottomListItemSelector.Render(" ")+
-			d.style.BottomListItemKey.Bold(true).Render(id)+
-			d.style.BottomListItemInactive.Render(title))
+		cursor = "  "
 	}
+
+	cursor = active.Render(cursor)
+	round := key.Render(strconv.FormatUint(uint64(i.Round()), 10))
+	rest := fmt.Sprintf("\t%d\t%d\t%d\t%d",
+		len(i.Payset),
+		12,
+		13,
+		14)
+	if index == model.Cursor() {
+		rest = active.Render(rest)
+	} else {
+		rest = inactive.Render(rest)
+	}
+	fmt.Fprintf(w, "%s%s%s\n", cursor, round, rest)
 }
+
+type blocks []blockItem
 
 type blockModel struct {
 	width        int
@@ -70,28 +61,20 @@ type blockModel struct {
 
 	node *node.AlgorandFullNode
 
-	blocks []blockItem
+	blocks blocks
 
-	list list.Model
+	table table.Model
 }
 
 func newBlockModel(node *node.AlgorandFullNode, styles *style.Styles, width, widthMargin, height, heightMargin int) blockModel {
-	l := list.New([]list.Item{}, itemDelegate{styles}, 0, 0)
-	l.Title = "Block Explorer"
-	l.Styles.Title = styles.BottomListTitle
-	l.SetShowFilter(false)
-	l.SetShowHelp(false)
-	l.SetShowPagination(false)
-	l.SetShowStatusBar(false)
-	l.SetShowTitle(true)
-	l.SetFilteringEnabled(false)
-	l.DisableQuitKeybindings()
-	l.Select(0)
+	t := table.New([]string{"  ROUND", "Txns", "Axfer", "Acfg", "Appl"}, 0, 0)
+	t.KeyMap.Up.SetKeys(append(t.KeyMap.Up.Keys(), "k")...)
+	t.KeyMap.Down.SetKeys(append(t.KeyMap.Down.Keys(), "j")...)
 	b := blockModel{
 		blockPerPage: 25,
 		style:        styles,
 		node:         node,
-		list:         l,
+		table:        t,
 		widthMargin:  widthMargin,
 		heightMargin: heightMargin,
 	}
@@ -130,22 +113,22 @@ func (b blockModel) Init() tea.Cmd {
 func (b *blockModel) SetSize(width, height int) {
 	b.width = width
 	b.height = height
-	b.list.SetSize(width-b.widthMargin-10, height-b.heightMargin)
-	b.list.Styles.PaginationStyle = b.style.BottomPaginator.Copy().Width(width - b.widthMargin)
+	b.table.SetSize(width-b.widthMargin, height-b.heightMargin)
 }
 
 func (b *blockModel) Update(msg tea.Msg) (*blockModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case BlocksMsg:
 		b.blocks = msg.blocks
-		var items []list.Item
+		var rows []table.Row
 		for _, b := range b.blocks {
-			items = append(items, b)
+			rows = append(rows, b)
 		}
+
+		b.table.SetRows(rows)
 		return b, tea.Batch(
-			b.list.SetItems(items),
 			tea.Tick(5*time.Second, func(_ time.Time) tea.Msg {
-				// TODO: skip during catchup? Or make more frequent?
+				// TODO: skip during catchup? Or make more/less frequent?
 				return b.getLatestBlockHeaders()
 			}),
 		)
@@ -153,12 +136,12 @@ func (b *blockModel) Update(msg tea.Msg) (*blockModel, tea.Cmd) {
 		b.SetSize(msg.Width, msg.Height)
 	}
 
-	l, listCmd := b.list.Update(msg)
-	b.list = l
+	t, tableCmd := b.table.Update(msg)
+	b.table = t
 
-	return b, tea.Batch(listCmd)
+	return b, tea.Batch(tableCmd)
 }
 
 func (b blockModel) View() string {
-	return b.style.Bottom.Render(b.list.View())
+	return b.style.Bottom.Render(b.table.View())
 }
