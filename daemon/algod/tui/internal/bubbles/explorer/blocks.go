@@ -10,9 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 	"github.com/algorand/go-algorand/data/bookkeeping"
-	"github.com/algorand/go-algorand/node"
 )
 
 // blockItem is used by the list bubble.
@@ -50,36 +48,14 @@ func (i blockItem) Render(w io.Writer, model table.Model, index int) {
 
 type blocks []blockItem
 
-type blockModel struct {
-	width        int
-	widthMargin  int
-	height       int
-	heightMargin int
-	style        *style.Styles
-
-	blockPerPage uint
-
-	node *node.AlgorandFullNode
-
-	blocks blocks
-
-	table table.Model
-}
-
-func newBlockModel(node *node.AlgorandFullNode, styles *style.Styles, width, widthMargin, height, heightMargin int) blockModel {
+func (m *Model) initBlock() {
+	m.blockPerPage = 25
+	//func newBlockModel(node *node.AlgorandFullNode, styles *style.Styles, width, widthMargin, height, heightMargin int) blockModel {
 	t := table.New([]string{"  ROUND", "Txns", "Axfer", "Acfg", "Appl"}, 0, 0)
 	t.KeyMap.Up.SetKeys(append(t.KeyMap.Up.Keys(), "k")...)
 	t.KeyMap.Down.SetKeys(append(t.KeyMap.Down.Keys(), "j")...)
-	b := blockModel{
-		blockPerPage: 25,
-		style:        styles,
-		node:         node,
-		table:        t,
-		widthMargin:  widthMargin,
-		heightMargin: heightMargin,
-	}
-	b.SetSize(width, height)
-	return b
+	m.table = t
+	m.SetSize(m.width, m.height)
 }
 
 type BlocksMsg struct {
@@ -87,13 +63,13 @@ type BlocksMsg struct {
 	err    error
 }
 
-func (b *blockModel) getLatestBlockHeaders() tea.Msg {
+func (m *Model) getLatestBlockHeaders() tea.Msg {
 	// TODO: Only fetch if needed, check current latest vs actual latest
 	var result BlocksMsg
 
-	ledger := b.node.Ledger()
+	ledger := m.node.Ledger()
 	latest := ledger.Latest()
-	for b.blockPerPage > uint(len(result.blocks)) && latest > 0 {
+	for m.blockPerPage > uint(len(result.blocks)) && latest > 0 {
 		block, err := ledger.Block(latest)
 		if err != nil {
 			result.err = err
@@ -106,42 +82,40 @@ func (b *blockModel) getLatestBlockHeaders() tea.Msg {
 	return result
 }
 
-func (b blockModel) Init() tea.Cmd {
-	return b.getLatestBlockHeaders
+func (m Model) InitBlock() tea.Cmd {
+	return m.getLatestBlockHeaders
 }
 
-func (b *blockModel) SetSize(width, height int) {
-	b.width = width
-	b.height = height
-	b.table.SetSize(width-b.widthMargin, height-b.heightMargin)
+func (m *Model) SetSize(width, height int) {
+	m.table.SetSize(width-m.widthMargin, height-m.heightMargin)
 }
 
-func (b *blockModel) Update(msg tea.Msg) (*blockModel, tea.Cmd) {
+func (m Model) UpdateBlock(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case BlocksMsg:
-		b.blocks = msg.blocks
+		m.blocks = msg.blocks
 		var rows []table.Row
-		for _, b := range b.blocks {
+		for _, b := range m.blocks {
 			rows = append(rows, b)
 		}
 
-		b.table.SetRows(rows)
-		return b, tea.Batch(
+		m.table.SetRows(rows)
+		return m, tea.Batch(
 			tea.Tick(5*time.Second, func(_ time.Time) tea.Msg {
 				// TODO: skip during catchup? Or make more/less frequent?
-				return b.getLatestBlockHeaders()
+				return m.getLatestBlockHeaders()
 			}),
 		)
 	case tea.WindowSizeMsg:
-		b.SetSize(msg.Width, msg.Height)
+		m.SetSize(msg.Width, msg.Height)
 	}
 
-	t, tableCmd := b.table.Update(msg)
-	b.table = t
+	t, tableCmd := m.table.Update(msg)
+	m.table = t
 
-	return b, tea.Batch(tableCmd)
+	return m, tea.Batch(tableCmd)
 }
 
-func (b blockModel) View() string {
-	return b.style.Bottom.Render(b.table.View())
+func (m Model) ViewBlock() string {
+	return m.style.Bottom.Render(m.table.View())
 }
