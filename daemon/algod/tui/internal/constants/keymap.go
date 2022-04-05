@@ -3,8 +3,7 @@ package constants
 import "github.com/charmbracelet/bubbles/key"
 
 type KeyMap struct {
-<<<<<<< HEAD
-	Generic key.Binding
+	Generic      key.Binding
 	Quit         key.Binding
 	Catchup      key.Binding
 	AbortCatchup key.Binding

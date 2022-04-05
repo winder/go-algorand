@@ -27,7 +27,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/algorand/go-algorand/crypto"
-  "github.com/algorand/go-algorand/data/basics"
+	"github.com/algorand/go-algorand/data/basics"
 	"github.com/algorand/go-algorand/node"
 )
 
@@ -94,6 +94,8 @@ func GetAccountStatusMsg(s *Server) tea.Cmd {
 		}
 
 		return rval
+	}
+}
 
 func StartFastCatchup(s *Server) tea.Cmd {
 	return func() tea.Msg {
