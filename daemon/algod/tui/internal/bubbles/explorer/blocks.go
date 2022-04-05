@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/algorand/go-algorand/data/bookkeeping"
+	"github.com/algorand/go-algorand/protocol"
 )
 
 // blockItem is used by the list bubble.
@@ -23,6 +24,63 @@ var inactive = lipgloss.NewStyle()
 var active = inactive.Copy().Foreground(lipgloss.Color("#B083EA")).Bold(true)
 var key = inactive.Copy().Width(10).Foreground(lipgloss.Color("#A3A322")).Bold(true)
 
+func computeBlockRow(b blockItem) string {
+	types := make(map[protocol.TxType]uint)
+	var paymentsTotal uint64
+	assets := make(map[uint64]struct{})
+	apps := make(map[uint64]struct{})
+	for _, tx := range b.Payset {
+		types[tx.Txn.Type]++
+
+		switch tx.Txn.Type {
+		case protocol.PaymentTx:
+			paymentsTotal += tx.Txn.PaymentTxnFields.Amount.Raw
+		case protocol.ApplicationCallTx:
+			id := uint64(tx.Txn.ApplicationCallTxnFields.ApplicationID)
+			if id == 0 {
+				id = uint64(tx.ApplyData.ApplicationID)
+			}
+			if id == 0 {
+				break
+			}
+			if _, ok := apps[id]; !ok {
+				apps[id] = struct{}{}
+			}
+		case protocol.AssetTransferTx:
+		case protocol.AssetFreezeTx:
+		case protocol.AssetConfigTx:
+			id := uint64(tx.Txn.AssetTransferTxnFields.XferAsset)
+			if id == 0 {
+				id = uint64(tx.ApplyData.ConfigAsset)
+			}
+			if id == 0 {
+				id = uint64(tx.Txn.AssetConfigTxnFields.ConfigAsset)
+			}
+			if id == 0 {
+				id = uint64(tx.Txn.AssetFreezeTxnFields.FreezeAsset)
+			}
+			if id == 0 {
+				break
+			}
+			if _, ok := assets[id]; !ok {
+				assets[id] = struct{}{}
+			}
+		}
+	}
+
+	return fmt.Sprintf("\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
+		len(b.Payset),
+		types[protocol.PaymentTx],
+		paymentsTotal,
+		types[protocol.AssetTransferTx],
+		types[protocol.AssetConfigTx],
+		types[protocol.AssetFreezeTx],
+		len(assets),
+		types[protocol.ApplicationCallTx],
+		len(apps))
+
+}
+
 func (i blockItem) Render(w io.Writer, model table.Model, index int) {
 	var cursor string
 	if index == model.Cursor() {
@@ -33,11 +91,7 @@ func (i blockItem) Render(w io.Writer, model table.Model, index int) {
 
 	cursor = active.Render(cursor)
 	round := key.Render(strconv.FormatUint(uint64(i.Round()), 10))
-	rest := fmt.Sprintf("\t%d\t%d\t%d\t%d",
-		len(i.Payset),
-		12,
-		13,
-		14)
+	rest := computeBlockRow(i)
 	if index == model.Cursor() {
 		rest = active.Render(rest)
 	} else {
@@ -50,8 +104,7 @@ type blocks []blockItem
 
 func (m *Model) initBlock() {
 	m.blockPerPage = 25
-	//func newBlockModel(node *node.AlgorandFullNode, styles *style.Styles, width, widthMargin, height, heightMargin int) blockModel {
-	t := table.New([]string{"  ROUND", "Txns", "Axfer", "Acfg", "Appl"}, 0, 0)
+	t := table.New([]string{"  ROUND", "Txns", "Pay", "[algos transferred]", "Axfer", "Acfg", "Afrz", "[Unique assets]", "Appl", "[Unique apps]"}, 0, 0)
 	t.KeyMap.Up.SetKeys(append(t.KeyMap.Up.Keys(), "k")...)
 	t.KeyMap.Down.SetKeys(append(t.KeyMap.Down.Keys(), "j")...)
 	m.table = t
@@ -106,6 +159,7 @@ func (m Model) UpdateBlock(msg tea.Msg) (Model, tea.Cmd) {
 				return m.getLatestBlockHeaders()
 			}),
 		)
+
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 	}
