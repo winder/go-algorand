@@ -14,6 +14,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keys.Quit):
 			return m, tea.Quit
 		}
+
+	case tea.WindowSizeMsg:
+		m.lastResize = msg
 	}
 
 	var statusCommand tea.Cmd

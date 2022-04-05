@@ -22,7 +22,6 @@ package tui
 import (
 	"context"
 	"fmt"
-	"github.com/algorand/go-algorand/daemon/algod/tui/internal/model"
 	"log"
 	"os"
 	"os/signal"
@@ -31,6 +30,7 @@ import (
 	"time"
 
 	"github.com/algorand/go-algorand/daemon/algod"
+	"github.com/algorand/go-algorand/daemon/algod/tui/internal/model"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/wish"
 	bm "github.com/charmbracelet/wish/bubbletea"
