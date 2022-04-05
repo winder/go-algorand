@@ -26,7 +26,7 @@ var Keys = KeyMap{
 	Generic: key.NewBinding(
 		key.WithHelp("↑/↓", "navigate")),
 	Quit: key.NewBinding(
-		key.WithKeys("q", "esc", "ctrl+c"),
+		key.WithKeys("q", "ctrl+c"),
 		key.WithHelp("q", "quit")),
 	Catchup: key.NewBinding(
 		key.WithKeys("f"),
