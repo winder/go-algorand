@@ -3,13 +3,18 @@ package constants
 import "github.com/charmbracelet/bubbles/key"
 
 type KeyMap struct {
+<<<<<<< HEAD
+	Generic key.Binding
 	Quit         key.Binding
 	Catchup      key.Binding
 	AbortCatchup key.Binding
+	Section      key.Binding
+	Forward      key.Binding
+	Back         key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Quit, k.Catchup, k.AbortCatchup}
+	return []key.Binding{k.Section, k.Forward, k.Back, k.Generic, k.Catchup, k.AbortCatchup, k.Quit}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
@@ -17,6 +22,9 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 var Keys = KeyMap{
+	// Not sure how to group help together.
+	Generic: key.NewBinding(
+		key.WithHelp("↑/↓", "navigate")),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "esc", "ctrl+c"),
 		key.WithHelp("q", "quit")),
@@ -26,4 +34,13 @@ var Keys = KeyMap{
 	AbortCatchup: key.NewBinding(
 		key.WithKeys("a"),
 		key.WithHelp("a", "abort catchup")),
+	Section: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "section")),
+	Forward: key.NewBinding(
+		key.WithKeys("enter", "→"),
+		key.WithHelp("enter/→", "forwards")),
+	Back: key.NewBinding(
+		key.WithKeys("esc", "←"),
+		key.WithHelp("esc/←", "backwards")),
 }
