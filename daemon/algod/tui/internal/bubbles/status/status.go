@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/progress"
+	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 	"github.com/algorand/go-algorand/node"
-	"github.com/charmbracelet/bubbles/progress"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
@@ -54,6 +55,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.verifiedAcctsPct = float64(m.Status.CatchpointCatchupVerifiedAccounts) / float64(m.Status.CatchpointCatchupTotalAccounts)
 		}
 		if m.Status.CatchpointCatchupTotalBlocks > 0 {
+			m.processedAcctsPct = 1
+			m.verifiedAcctsPct = 1
 			m.acquiredBlksPct = float64(m.Status.CatchpointCatchupAcquiredBlocks) / float64(m.Status.CatchpointCatchupTotalBlocks)
 		}
 		return m, tea.Tick(100*time.Millisecond, func(time.Time) tea.Msg {
@@ -87,6 +90,12 @@ func formatNextVersion(last, next string, round uint64) string {
 	return strconv.FormatUint(round, 10)
 }
 
+func writeProgress(b *strings.Builder, prefix string, progress progress.Model, pct float64) {
+	b.WriteString(prefix)
+	b.WriteString(progress.ViewAs(pct))
+	b.WriteString("\n")
+}
+
 func (m Model) View() string {
 	bold := m.style.StatusBoldText
 	key := m.style.BottomListItemKey.Copy().MarginLeft(0)
@@ -105,13 +114,21 @@ func (m Model) View() string {
 		switch {
 		case m.Status.Catchpoint != "":
 			// Catchpoint view
-			report.WriteString(fmt.Sprintf("Catchpoint: %s\n", m.Status.Catchpoint))
-			report.WriteString("Catchpoint processed accounts: ")
-			report.WriteString(m.progress.ViewAs(m.processedAcctsPct))
-			report.WriteString("\nCatchpoint verified accounts: ")
-			report.WriteString(m.progress.ViewAs(m.verifiedAcctsPct))
-			report.WriteString("\nCatchpoint acquired block: ")
-			report.WriteString(m.progress.ViewAs(m.acquiredBlksPct))
+			report.WriteString(fmt.Sprintf("Catchpoint: %s\n\n", m.Status.Catchpoint))
+			var catchupStatus string
+			switch {
+			case m.Status.CatchpointCatchupAcquiredBlocks > 0:
+				catchupStatus = fmt.Sprintf("Verifying accounts: %d / %d\n", m.Status.CatchpointCatchupAcquiredBlocks, m.Status.CatchpointCatchupTotalBlocks)
+			case m.Status.CatchpointCatchupVerifiedAccounts > 0:
+				catchupStatus = fmt.Sprintf("Verifying accounts: %d / %d\n", m.Status.CatchpointCatchupVerifiedAccounts, m.Status.CatchpointCatchupTotalAccounts)
+			case m.Status.CatchpointCatchupProcessedAccounts > 0:
+				catchupStatus = fmt.Sprintf("Downloading accounts: %d / %d\n", m.Status.CatchpointCatchupProcessedAccounts, m.Status.CatchpointCatchupTotalAccounts)
+			}
+			report.WriteString(bold.Render(catchupStatus))
+			report.WriteString("\n")
+			writeProgress(&report, "Downloading accounts: ", m.progress, m.processedAcctsPct)
+			writeProgress(&report, "Processing accounts:  ", m.progress, m.verifiedAcctsPct)
+			writeProgress(&report, "Downloading blocks:   ", m.progress, m.acquiredBlksPct)
 		default:
 			report.WriteString(fmt.Sprintf("Current round:   %s\n", key.Render(strconv.FormatUint(uint64(m.Status.LastRound), 10))))
 			report.WriteString(fmt.Sprintf("Block wait time: %s\n", m.Status.TimeSinceLastRound()))

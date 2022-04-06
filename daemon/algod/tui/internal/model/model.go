@@ -14,7 +14,7 @@ import (
 
 const (
 	// MaxTopBoxHeight is the height of the top boxes. Hard coded to avoid dynamic margins.
-	MaxTopBoxHeight = 20
+	MaxTopBoxHeight = style.TopHeight
 	initialWidth    = 80
 	initialHeight   = 50
 )
@@ -26,6 +26,8 @@ type Model struct {
 	BlockExplorer explorer.Model
 	Help          help.Model
 	Footer        footer.Model
+
+	network algod.NetworkMsg
 
 	styles *style.Styles
 

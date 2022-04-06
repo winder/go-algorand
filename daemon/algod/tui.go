@@ -97,9 +97,9 @@ func GetAccountStatusMsg(s *Server) tea.Cmd {
 	}
 }
 
-func StartFastCatchup(s *Server) tea.Cmd {
+func StartFastCatchup(s *Server, network string) tea.Cmd {
 	return func() tea.Msg {
-		resp, err := http.Get("https://algorand-catchpoints.s3.us-east-2.amazonaws.com/channel/testnet/latest.catchpoint")
+		resp, err := http.Get(fmt.Sprintf("https://algorand-catchpoints.s3.us-east-2.amazonaws.com/channel/%s/latest.catchpoint", network))
 		if err != nil {
 			panic(err)
 		}
@@ -138,9 +138,9 @@ func StartFastCatchup(s *Server) tea.Cmd {
 	}
 }
 
-func StopFastCatchup(s *Server) tea.Cmd {
+func StopFastCatchup(s *Server, network string) tea.Cmd {
 	return func() tea.Msg {
-		resp, err := http.Get("https://algorand-catchpoints.s3.us-east-2.amazonaws.com/channel/testnet/latest.catchpoint")
+		resp, err := http.Get(fmt.Sprintf("https://algorand-catchpoints.s3.us-east-2.amazonaws.com/channel/%s/latest.catchpoint", network))
 		if err != nil {
 			panic(err)
 		}

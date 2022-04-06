@@ -121,6 +121,7 @@ func (m *Model) initBlocks() {
 	t := table.New(blockTableHeader, 0, 0)
 	t.KeyMap.Up.SetKeys(append(t.KeyMap.Up.Keys(), "k")...)
 	t.KeyMap.Down.SetKeys(append(t.KeyMap.Down.Keys(), "j")...)
+	t.Styles.Title = m.style.StatusBoldText
 	m.table = t
 	m.SetSize(m.width, m.height)
 	m.updateBlockTable()

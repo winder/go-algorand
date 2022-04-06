@@ -60,7 +60,7 @@ func NewModel(server *algod.Server, styles *style.Styles, width, widthMargin, he
 		width:        width,
 		widthMargin:  widthMargin,
 		height:       height,
-		heightMargin: heightMargin,
+		heightMargin: heightMargin + 6,
 	}
 	m.initBlocks()
 	return m

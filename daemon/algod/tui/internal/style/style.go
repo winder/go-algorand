@@ -7,6 +7,10 @@ import (
 // XXX: For now, this is in its own package so that it can be shared between
 // different packages without incurring an illegal import cycle.
 
+const (
+	TopHeight = 13
+)
+
 // Styles defines styles for the TUI.
 type Styles struct {
 	ActiveBorderColor   lipgloss.Color
@@ -111,18 +115,19 @@ func DefaultStyles() *Styles {
 
 	// Status
 	s.Status = lipgloss.NewStyle().
+		Height(TopHeight-2).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(s.InactiveBorderColor).
 		Padding(0, 1, 0, 1).
-		Margin(0, 0, 1, 1)
-	s.StatusBoldText = lipgloss.NewStyle().Bold(true)
+		MarginLeft(1)
+	s.StatusBoldText = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#0693E3"))
 
 	// Bottom box
 	s.Bottom = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(s.InactiveBorderColor).
-		Padding(1, 1, 1, 1).
-		MarginRight(1)
+		Padding(1, 2, 1, 1).
+		MarginLeft(1)
 
 	s.BottomListItemInactive = lipgloss.NewStyle().
 		MarginLeft(1)
