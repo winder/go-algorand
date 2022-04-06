@@ -6,6 +6,7 @@ import (
 
 	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/accounts"
+	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/configs"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/explorer"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/footer"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/status"
@@ -24,6 +25,7 @@ type Model struct {
 	Status        status.Model
 	Accounts      accounts.Model
 	BlockExplorer explorer.Model
+	Configs       configs.Model
 	Help          help.Model
 	Footer        footer.Model
 
