@@ -103,18 +103,19 @@ func (m Model) View() string {
 
 	builder.WriteString(fmt.Sprintf("%s %s\n", bold.Render("Network:"), m.Network.GenesisID))
 	builder.WriteString(fmt.Sprintf("%s %s\n", bold.Render("Genesis:"), m.Network.GenesisHash))
+	// TODO: get rid of magic number
+	height := style.TopHeight - 2 - 3 // 3 is the padding/margin/border
 	// status
 	if (m.Status != node.StatusReport{}) {
 		nextVersion := formatNextVersion(
 			string(m.Status.LastVersion),
 			string(m.Status.NextVersion),
 			uint64(m.Status.NextVersionRound))
-		report := strings.Builder{}
 
 		switch {
 		case m.Status.Catchpoint != "":
 			// Catchpoint view
-			report.WriteString(fmt.Sprintf("Catchpoint: %s\n\n", m.Status.Catchpoint))
+			builder.WriteString(fmt.Sprintf("Catchpoint: %s\n\n", m.Status.Catchpoint))
 			var catchupStatus string
 			switch {
 			case m.Status.CatchpointCatchupAcquiredBlocks > 0:
@@ -124,31 +125,38 @@ func (m Model) View() string {
 			case m.Status.CatchpointCatchupProcessedAccounts > 0:
 				catchupStatus = fmt.Sprintf("Downloading accounts: %d / %d\n", m.Status.CatchpointCatchupProcessedAccounts, m.Status.CatchpointCatchupTotalAccounts)
 			}
-			report.WriteString(bold.Render(catchupStatus))
-			report.WriteString("\n")
-			writeProgress(&report, "Downloading accounts: ", m.progress, m.processedAcctsPct)
-			writeProgress(&report, "Processing accounts:  ", m.progress, m.verifiedAcctsPct)
-			writeProgress(&report, "Downloading blocks:   ", m.progress, m.acquiredBlksPct)
+			builder.WriteString(bold.Render(catchupStatus))
+			builder.WriteString("\n")
+			writeProgress(&builder, "Downloading accounts: ", m.progress, m.processedAcctsPct)
+			writeProgress(&builder, "Processing accounts:  ", m.progress, m.verifiedAcctsPct)
+			writeProgress(&builder, "Downloading blocks:   ", m.progress, m.acquiredBlksPct)
+			height -= 5
 		default:
-			report.WriteString(fmt.Sprintf("Current round:   %s\n", key.Render(strconv.FormatUint(uint64(m.Status.LastRound), 10))))
-			report.WriteString(fmt.Sprintf("Block wait time: %s\n", m.Status.TimeSinceLastRound()))
-			report.WriteString(fmt.Sprintf("Sync time:       %s\n", m.Status.SynchronizingTime))
+			builder.WriteString(fmt.Sprintf("Current round:   %s\n", key.Render(strconv.FormatUint(uint64(m.Status.LastRound), 10))))
+			builder.WriteString(fmt.Sprintf("Block wait time: %s\n", m.Status.TimeSinceLastRound()))
+			builder.WriteString(fmt.Sprintf("Sync time:       %s\n", m.Status.SynchronizingTime))
+			height -= 3
 			// TODO: Display consensus upgrade progress
 			if m.Status.LastVersion == m.Status.NextVersion {
 				// no upgrade in progress
-				report.WriteString(fmt.Sprintf("Protocol:        %s\n", formatVersion(string(m.Status.LastVersion))))
-				report.WriteString(fmt.Sprintf("                 %s\n", bold.Render("No upgrade in progress.")))
+				builder.WriteString(fmt.Sprintf("Protocol:        %s\n", formatVersion(string(m.Status.LastVersion))))
+				builder.WriteString(fmt.Sprintf("                 %s\n", bold.Render("No upgrade in progress.")))
+				height -= 2
 			} else {
 				// upgrade in progress
-				report.WriteString(fmt.Sprintf("%s\n", bold.Render("Consensus Upgrade Pending")))
-				report.WriteString(fmt.Sprintf("Current Protocol: %s\n", formatVersion(string(m.Status.LastVersion))))
-				report.WriteString(fmt.Sprintf("Next Protocol:    %s\n", formatVersion(string(m.Status.NextVersion))))
-				report.WriteString(fmt.Sprintf("Upgrade round:    %s\n", nextVersion))
-
+				builder.WriteString(fmt.Sprintf("%s\n", bold.Render("Consensus Upgrade Pending")))
+				builder.WriteString(fmt.Sprintf("Current Protocol: %s\n", formatVersion(string(m.Status.LastVersion))))
+				builder.WriteString(fmt.Sprintf("Next Protocol:    %s\n", formatVersion(string(m.Status.NextVersion))))
+				builder.WriteString(fmt.Sprintf("Upgrade round:    %s\n", nextVersion))
+				height -= 4
 			}
 		}
+	}
 
-		builder.WriteString(report.String())
+	// pad the box
+	for height > 0 {
+		builder.WriteString("\n")
+		height--
 	}
 
 	return m.style.Status.Render(builder.String())

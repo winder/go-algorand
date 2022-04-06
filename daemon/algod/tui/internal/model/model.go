@@ -41,7 +41,7 @@ func New(s *algod.Server) Model {
 		Server:        s,
 		styles:        styles,
 		Status:        status.New(s, styles),
-		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight /* Max(status.height, account.height) */),
+		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight+2 /* +2 for footer/help */),
 		Accounts:      accounts.NewModel(s),
 		Help:          help.New(),
 		Footer:        footer.New(styles),
