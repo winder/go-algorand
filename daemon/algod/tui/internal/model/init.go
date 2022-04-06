@@ -9,5 +9,6 @@ func (m Model) Init() tea.Cmd {
 		tea.EnterAltScreen,
 		m.Status.Init(),
 		m.Accounts.Init(),
-		m.BlockExplorer.Init())
+		m.BlockExplorer.Init(),
+		m.Footer.Init())
 }

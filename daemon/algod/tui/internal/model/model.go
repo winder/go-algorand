@@ -7,6 +7,7 @@ import (
 	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/accounts"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/explorer"
+	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/footer"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/status"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 )
@@ -24,6 +25,7 @@ type Model struct {
 	Accounts      accounts.Model
 	BlockExplorer explorer.Model
 	Help          help.Model
+	Footer        footer.Model
 
 	styles *style.Styles
 
@@ -40,5 +42,6 @@ func New(s *algod.Server) Model {
 		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight /* Max(status.height, account.height) */),
 		Accounts:      accounts.NewModel(s),
 		Help:          help.New(),
+		Footer:        footer.New(styles),
 	}
 }

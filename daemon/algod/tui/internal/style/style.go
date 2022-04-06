@@ -21,6 +21,11 @@ type Styles struct {
 	ActiveBorderColor   lipgloss.Color
 	InactiveBorderColor lipgloss.Color
 
+	Footer       lipgloss.Style
+	FooterLeft   lipgloss.Style
+	FooterMiddle lipgloss.Style
+	FooterRight  lipgloss.Style
+
 	/*
 		App    lipgloss.Style
 		Header lipgloss.Style
@@ -123,6 +128,25 @@ func DefaultStyles() *Styles {
 	s.BottomListItemKey = s.BottomListItemInactive.Copy().
 		Width(10).
 		Foreground(lipgloss.Color("#A3A322"))
+
+	// Inspired by lipgloss demo
+	s.Footer = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#343433", Dark: "#C1C6B2"}).
+		Background(lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#353533"})
+
+	s.FooterLeft = lipgloss.NewStyle().
+		Inherit(s.Footer).
+		Foreground(lipgloss.Color("#FFFDF5")).
+		Background(lipgloss.Color("#4CAF50")).
+		Padding(0, 1).
+		MarginRight(1)
+	s.FooterMiddle = lipgloss.NewStyle().
+		Inherit(s.Footer)
+
+	s.FooterRight = lipgloss.NewStyle().Inherit(s.Footer).
+		Background(lipgloss.Color("#A550DF")).
+		Padding(0, 1).
+		Align(lipgloss.Right)
 
 	/*
 		s.App = lipgloss.NewStyle().

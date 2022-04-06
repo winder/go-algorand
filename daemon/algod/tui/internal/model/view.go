@@ -13,5 +13,6 @@ func (m Model) View() string {
 			m.Status.View(),
 			m.Accounts.View()),
 		m.BlockExplorer.View(),
-		m.Help.View(constants.Keys))
+		m.Help.View(constants.Keys),
+		m.Footer.View())
 }
