@@ -44,9 +44,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var configsCommand tea.Cmd
 	m.Configs, configsCommand = m.Configs.Update(msg)
 
-	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand)
 	var footerCommand tea.Cmd
 	m.Footer, footerCommand = m.Footer.Update(msg)
 
-	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, footerCommand)
+	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand)
 }
