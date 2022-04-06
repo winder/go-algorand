@@ -9,6 +9,14 @@ import (
 
 // Styles defines styles for the TUI.
 type Styles struct {
+	ActiveBorderColor   lipgloss.Color
+	InactiveBorderColor lipgloss.Color
+
+	// Status area
+	Status         lipgloss.Style
+	StatusBoldText lipgloss.Style
+
+	// Bottom area
 	Bottom          lipgloss.Style
 	BottomPaginator lipgloss.Style
 
@@ -18,9 +26,7 @@ type Styles struct {
 	BottomListItemInactive lipgloss.Style
 	BottomListItemKey      lipgloss.Style
 
-	ActiveBorderColor   lipgloss.Color
-	InactiveBorderColor lipgloss.Color
-
+	// Footer
 	Footer       lipgloss.Style
 	FooterLeft   lipgloss.Style
 	FooterMiddle lipgloss.Style
@@ -97,10 +103,19 @@ func DefaultStyles() *Styles {
 
 	// used
 	s.ActiveBorderColor = lipgloss.Color("62")
-	s.InactiveBorderColor = lipgloss.Color("236")
+	//s.InactiveBorderColor = lipgloss.Color("236")
+	s.InactiveBorderColor = lipgloss.Color("#ABB8C3")
 	s.BottomPaginator = lipgloss.NewStyle().
 		Margin(0).
 		Align(lipgloss.Center)
+
+	// Status
+	s.Status = lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(s.InactiveBorderColor).
+		Padding(0, 1, 0, 1).
+		Margin(0, 0, 1, 1)
+	s.StatusBoldText = lipgloss.NewStyle().Bold(true)
 
 	// Bottom box
 	s.Bottom = lipgloss.NewStyle().

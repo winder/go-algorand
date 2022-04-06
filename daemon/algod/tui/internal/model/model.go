@@ -38,7 +38,7 @@ func New(s *algod.Server) Model {
 	return Model{
 		Server:        s,
 		styles:        styles,
-		Status:        status.NewModel(s),
+		Status:        status.New(s, styles),
 		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight /* Max(status.height, account.height) */),
 		Accounts:      accounts.NewModel(s),
 		Help:          help.New(),
