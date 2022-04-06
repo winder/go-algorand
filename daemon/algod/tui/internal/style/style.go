@@ -115,7 +115,7 @@ func DefaultStyles() *Styles {
 
 	// Status
 	s.Status = lipgloss.NewStyle().
-		Height(TopHeight-2).
+		Height(TopHeight).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(s.InactiveBorderColor).
 		Padding(0, 1, 0, 1).
