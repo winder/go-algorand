@@ -41,8 +41,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var explorerCommand tea.Cmd
 	m.BlockExplorer, explorerCommand = m.BlockExplorer.Update(msg)
 
+	var configsCommand tea.Cmd
+	m.Configs, configsCommand = m.Configs.Update(msg)
+
 	var footerCommand tea.Cmd
 	m.Footer, footerCommand = m.Footer.Update(msg)
 
-	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, footerCommand)
+	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand)
 }
