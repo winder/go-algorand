@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/algorand/go-algorand/daemon/algod"
+	"github.com/algorand/go-algorand/node"
 )
 
 const useHighPerformanceRenderer = false
@@ -32,9 +34,9 @@ type Model struct {
 	viewport viewport.Model
 }
 
-func NewModel() Model {
+func New(s *algod.Server) Model {
 	return Model{
-		content:  algod.GetConfigs(),
+		content:  node.GetConfigs(algod.GetNode(s)),
 		viewport: viewport.New(60, 20),
 	}
 }
