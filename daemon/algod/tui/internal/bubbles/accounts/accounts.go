@@ -40,19 +40,19 @@ type account struct {
 type Model struct {
 	Accounts map[basics.Address]*account
 
-	server   *algod.Server
-	Err      error
-	style    *style.Styles
-	viewport viewport.Model
+	server       *algod.Server
+	Err          error
+	style        *style.Styles
+	viewport     viewport.Model
 	heightMargin int
 }
 
-func NewModel(server *algod.Server, style *style.Styles, initialHeight int,  heightMargin int) Model {
+func NewModel(server *algod.Server, style *style.Styles, initialHeight int, heightMargin int) Model {
 	rval := Model{
-		Accounts: make(map[basics.Address]*account),
-		server:   server,
-		style:    style,
-		viewport: viewport.New(0, 0),
+		Accounts:     make(map[basics.Address]*account),
+		server:       server,
+		style:        style,
+		viewport:     viewport.New(0, 0),
 		heightMargin: heightMargin,
 	}
 	rval.setSize(80, initialHeight)
@@ -95,17 +95,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	cmds = append(cmds,
-		tea.Tick(100*time.Millisecond, func(time.Time) tea.Msg {
-			return algod.GetAccountStatusMsg(m.server)()
-		}),
-	)
-
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.setSize(msg.Width, msg.Height)
-		break
+
 	case algod.AccountStatusMsg:
+		cmds = append(cmds,
+			tea.Tick(1*time.Second, func(time.Time) tea.Msg {
+				return algod.GetAccountStatusMsg(m.server)()
+			}),
+		)
 
 		for msgAddress, msgBalance := range msg {
 
@@ -128,11 +127,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				MicroAlgos: msgBalance,
 				TimeStamp:  time.Now(),
 			}
-
 		}
 
 		m.viewport.SetContent(m.buildString())
-		break
 	}
 
 	m.viewport, cmd = m.viewport.Update(msg)

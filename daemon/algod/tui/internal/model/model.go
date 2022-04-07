@@ -24,11 +24,11 @@ type activeComponent int
 
 const (
 	explorerTab activeComponent = iota
+	utilitiesTab
 	accountTab
 	configTab
 	helpTab
 )
-const numTabs = 3
 
 type Model struct {
 	Status        status.Model
@@ -36,6 +36,7 @@ type Model struct {
 	Tabs          tabs.Model
 	BlockExplorer explorer.Model
 	Configs       configs.Model
+	Utilities     tea.Model
 	About         tea.Model
 	Help          help.Model
 	Footer        footer.Model
@@ -52,7 +53,7 @@ type Model struct {
 
 func New(s *algod.Server) Model {
 	styles := style.DefaultStyles()
-	tab := tabs.New([]string{"EXPLORER", "ACCOUNT", "CONFIGURATION", "HELP"})
+	tab := tabs.New([]string{"EXPLORER", "UTILITIES", "ACCOUNTS", "CONFIGURATION", "HELP"})
 	// The tab content is the only flexible element.
 	// This means the height must grow or shrink to fill the available
 	// window height. It has access to the absolute height but needs to
@@ -69,6 +70,7 @@ func New(s *algod.Server) Model {
 		Accounts:      accounts.NewModel(s, styles, initialHeight, tabContentMargin),
 		Help:          help.New(),
 		Footer:        footer.New(styles),
-		About:         about.New(tabContentMargin),
+		About:         about.New(tabContentMargin, about.GetHelpContent()),
+		Utilities:     about.New(tabContentMargin, about.GetUtilsContent()),
 	}
 }

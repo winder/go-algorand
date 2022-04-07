@@ -10,10 +10,11 @@ type KeyMap struct {
 	Section      key.Binding
 	Forward      key.Binding
 	Back         key.Binding
+	Help         key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Section, k.Forward, k.Back, k.Generic, k.Catchup, k.AbortCatchup, k.Quit}
+	return []key.Binding{k.Section, k.Forward, k.Back, k.Generic, k.Quit, k.Help}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
@@ -24,6 +25,8 @@ var Keys = KeyMap{
 	// Not sure how to group help together.
 	Generic: key.NewBinding(
 		key.WithHelp("↑/↓", "navigate")),
+	Help: key.NewBinding(
+		key.WithHelp("?", "help")),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "ctrl+c"),
 		key.WithHelp("q", "quit")),
@@ -38,8 +41,8 @@ var Keys = KeyMap{
 		key.WithHelp("tab", "section")),
 	Forward: key.NewBinding(
 		key.WithKeys("enter", "→"),
-		key.WithHelp("enter/→", "forwards")),
+		key.WithHelp("enter", "forwards")),
 	Back: key.NewBinding(
 		key.WithKeys("esc", "←"),
-		key.WithHelp("esc/←", "backwards")),
+		key.WithHelp("esc", "backwards")),
 }
