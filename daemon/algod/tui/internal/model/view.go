@@ -6,6 +6,20 @@ import (
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/constants"
 )
 
+// TODO: this function could implement a type and be passed to the tab view.
+func (m Model) tabView() string {
+	switch activeComponent(m.Tabs.GetActiveIndex()) {
+	case explorerTab:
+		return m.BlockExplorer.View()
+	case configTab:
+		return m.Configs.View()
+	case helpTab:
+		return "Help tab"
+	}
+
+	return "unknown tab"
+}
+
 func (m Model) View() string {
 	// Compose the different views by joining them together in the right orientation.
 	return lipgloss.JoinVertical(0,
@@ -13,10 +27,7 @@ func (m Model) View() string {
 			m.Status.View(),
 			m.Accounts.View()),
 		m.Tabs.View(),
-		m.BlockExplorer.View(),
-		//m.Configs.View(),
-		//lipgloss.JoinHorizontal(0.2, m.BlockExplorer.View(),
-		//	m.Configs.View()),
+		m.tabView(),
 		m.Help.View(constants.Keys),
 		m.Footer.View())
 }

@@ -46,6 +46,10 @@ func (m *Model) SetActiveIndex(i int) {
 	m.index = i
 }
 
+func (m Model) GetActiveIndex() int {
+	return m.index
+}
+
 func (m Model) Init() tea.Cmd {
 	return nil
 }
