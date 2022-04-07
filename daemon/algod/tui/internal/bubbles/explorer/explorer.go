@@ -85,14 +85,14 @@ func (m *Model) getLatestBlockHeaders() tea.Msg {
 	ledger := m.node.Ledger()
 	latest := ledger.Latest()
 	for m.blockPerPage > uint(len(result.blocks)) && latest > 0 {
-		block, err := ledger.Block(latest)
+		block, cert, err := ledger.BlockCert(latest)
 		if err != nil {
 			result.err = err
 			return result
 		}
 		latest -= 1
 
-		result.blocks = append(result.blocks, blockItem{&block})
+		result.blocks = append(result.blocks, blockItem{&block, &cert})
 	}
 	return result
 }

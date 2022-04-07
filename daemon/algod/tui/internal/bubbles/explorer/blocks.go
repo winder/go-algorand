@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/algorand/go-algorand/agreement"
 	"github.com/algorand/go-algorand/data/bookkeeping"
 	"github.com/algorand/go-algorand/protocol"
 )
@@ -16,6 +17,7 @@ import (
 // blockItem is used by the list bubble.
 type blockItem struct {
 	*bookkeeping.Block
+	*agreement.Certificate
 }
 
 // Hacked these in to workaround missing style options in table model
@@ -23,7 +25,7 @@ var inactiveStyle = lipgloss.NewStyle()
 var activeStyle = inactiveStyle.Copy().Foreground(lipgloss.Color("#B083EA")).Bold(true)
 var keyStyle = inactiveStyle.Copy().Width(10).Foreground(lipgloss.Color("#A3A322")).Bold(true)
 
-var blockTableHeader = []string{"  ROUND", "Txns", "Pay", "[algos transferred]", "Axfer", "Acfg", "Afrz", "[Unique assets]", "Appl", "[Unique apps]"}
+var blockTableHeader = []string{"  ROUND", "Txns", "Pay", "[Sum λ]", "Axfer", "Acfg", "Afrz", "[Unique]", "Appl", "[Unique]", "Proposer"}
 
 func computeBlockRow(b blockItem) string {
 	types := make(map[protocol.TxType]uint)
@@ -71,16 +73,17 @@ func computeBlockRow(b blockItem) string {
 		}
 	}
 
-	return fmt.Sprintf("\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
+	return fmt.Sprintf("\t%d\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%s",
 		len(b.Payset),
 		types[protocol.PaymentTx],
-		paymentsTotal,
+		float64(paymentsTotal)/float64(10000),
 		types[protocol.AssetTransferTx],
 		types[protocol.AssetConfigTx],
 		types[protocol.AssetFreezeTx],
 		len(assets),
 		types[protocol.ApplicationCallTx],
-		len(apps))
+		len(apps),
+		b.Certificate.Proposal.OriginalProposer.String())
 
 }
 
@@ -93,7 +96,7 @@ func (i blockItem) Render(w io.Writer, model table.Model, index int) {
 	}
 
 	cursor = activeStyle.Render(cursor)
-	round := keyStyle.Render(strconv.FormatUint(uint64(i.Round()), 10))
+	round := keyStyle.Render(strconv.FormatUint(uint64(i.Block.Round()), 10))
 	rest := computeBlockRow(i)
 	if index == model.Cursor() {
 		rest = activeStyle.Render(rest)

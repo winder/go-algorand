@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/indent"
 
 	"github.com/algorand/go-algorand/data/transactions"
 	"github.com/algorand/go-algorand/protocol"
@@ -33,7 +34,7 @@ var (
 
 func (m *Model) initTransaction(txn *transactions.SignedTxnInBlock) {
 	m.txnView.YOffset = 0
-	m.txnView.SetContent(string(protocol.EncodeJSON(txn)))
+	m.txnView.SetContent(indent.String(string(protocol.EncodeJSON(txn)), 6))
 }
 
 func max(a, b int) int {
