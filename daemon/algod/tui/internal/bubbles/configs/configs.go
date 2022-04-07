@@ -63,7 +63,7 @@ func (m *Model) setSize(width, height int) {
 	footerHeight := lipgloss.Height(m.footerView())
 
 	m.viewport.Width = 70
-	m.viewport.Height = height - m.heightMargin - headerHeight - footerHeight - 8
+	m.viewport.Height = height - m.heightMargin - headerHeight - footerHeight
 	//m.viewport.YPosition = headerHeight + 1
 }
 
@@ -77,7 +77,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case ConfigContent:
 		m.ready = true
 		//m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
-		m.viewport.SetContent(string(msg))
+		// this seems to work.
+		//m.viewport.SetContent(strings.Repeat("This is a teat\n", 100))
+
+		m.viewport.SetContent(strings.ReplaceAll(string(msg), "\t", "    "))
 
 	case tea.WindowSizeMsg:
 		m.setSize(msg.Width, msg.Height)
