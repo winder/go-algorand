@@ -5,7 +5,9 @@ import (
 
 	table "github.com/calyptia/go-bubble-table"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/constants"
@@ -47,7 +49,8 @@ type Model struct {
 	// cache for txn page
 	txn transactions.SignedTxnInBlock
 
-	table table.Model
+	table   table.Model
+	txnView viewport.Model
 }
 
 func NewModel(server *algod.Server, styles *style.Styles, width, widthMargin, height, heightMargin int) Model {
@@ -104,6 +107,8 @@ func (m *Model) SetSize(width, height int) {
 	m.height = height
 	verticalFrameSize := m.style.Bottom.GetVerticalFrameSize()
 	m.table.SetSize(width-m.widthMargin, height-m.heightMargin-verticalFrameSize)
+	m.txnView.Width = width - m.widthMargin
+	m.txnView.Height = height - m.heightMargin - lipgloss.Height(m.headerView()) - lipgloss.Height(m.footerView())
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -116,6 +121,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keys.Forward):
 			switch m.state {
 			case blockState:
+				// Select transactions.
 				m.state = paysetState
 				switch block := m.table.SelectedRow().(type) {
 				case blockItem:
@@ -128,6 +134,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.initTransactions()
 			case paysetState:
 				m.state = txnState
+				switch txn := m.table.SelectedRow().(type) {
+				case transactionItem:
+					m.initTransaction(txn.SignedTxnInBlock)
+				}
 			}
 
 		// navigate out of explorer views
@@ -136,6 +146,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case paysetState:
 				m.state = blockState
 				m.initBlocks()
+				return m, tea.Batch(append(cmds, m.getLatestBlockHeaders)...)
 			case txnState:
 				m.state = paysetState
 			}
@@ -146,11 +157,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case BlocksMsg:
 		m.blocks = msg.blocks
-		cmds = append(cmds, tea.Batch(
-			tea.Tick(5*time.Second, func(_ time.Time) tea.Msg {
-				// TODO: skip during catchup? Or make more/less frequent?
-				return m.getLatestBlockHeaders()
-			})))
+		cmds = append(cmds, tea.Tick(1*time.Second, func(_ time.Time) tea.Msg {
+			// TODO: skip during catchup? Or make more/less frequent?
+			return m.getLatestBlockHeaders()
+		}))
 	}
 
 	t, tableCmd := m.table.Update(msg)
@@ -164,7 +174,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case paysetState:
 		return m, nil
 	case txnState:
-		return m, nil
+		m.txnView, updateCmd = m.txnView.Update(msg)
+		return m, tea.Batch(append(cmds, updateCmd)...)
 	}
 
 	return m, nil
@@ -175,7 +186,7 @@ func (m Model) View() string {
 	case blockState, paysetState:
 		return m.style.Bottom.Render(m.table.View())
 	case txnState:
-		return ""
+		return m.viewTransaction()
 	}
 	return ""
 }
