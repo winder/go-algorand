@@ -10,6 +10,7 @@ import (
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/explorer"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/footer"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/status"
+	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/tabs"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 )
 
@@ -20,10 +21,19 @@ const (
 	initialHeight   = 50
 )
 
+type activeComponent int
+
+const (
+	explorerTab activeComponent = iota
+	configTab
+	helpTab
+)
+const numTabs = 3
+
 type Model struct {
-	Server        *algod.Server
 	Status        status.Model
 	Accounts      accounts.Model
+	Tabs          tabs.Model
 	BlockExplorer explorer.Model
 	Configs       configs.Model
 	Help          help.Model
@@ -33,6 +43,8 @@ type Model struct {
 
 	styles *style.Styles
 
+	active activeComponent
+	Server *algod.Server
 	// remember the last resize so we can re-send it when selecting a different bottom component.
 	lastResize tea.WindowSizeMsg
 }
@@ -40,10 +52,12 @@ type Model struct {
 func New(s *algod.Server) Model {
 	styles := style.DefaultStyles()
 	return Model{
+		active:        explorerTab,
 		Server:        s,
 		styles:        styles,
 		Status:        status.New(s, styles),
-		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight+2 /* +2 for footer/help */),
+		Tabs:          tabs.New([]string{"EXPLORER", "CONFIGURATION", "HELP"}),
+		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight+style.TabHeight+2 /* +3 for tabs/footer/help */),
 		Accounts:      accounts.NewModel(s),
 		Configs:       configs.New(s),
 		Help:          help.New(),

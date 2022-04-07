@@ -26,6 +26,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, algod.StartFastCatchup(m.Server, networkFromID(m.Status.Network.GenesisID))
 		case key.Matches(msg, constants.Keys.AbortCatchup):
 			return m, algod.StopFastCatchup(m.Server, networkFromID(m.Status.Network.GenesisID))
+		case key.Matches(msg, constants.Keys.Section):
+			m.active += 1
+			m.active %= 3
+			m.Tabs.SetActiveIndex(int(m.active))
+			return m, nil
+		}
+		switch m.active {
+		case explorerTab:
+			var explorerCommand tea.Cmd
+			m.BlockExplorer, explorerCommand = m.BlockExplorer.Update(msg)
+			return m, explorerCommand
+		case configTab:
+		case helpTab:
 		}
 
 	case tea.WindowSizeMsg:
@@ -47,5 +60,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var footerCommand tea.Cmd
 	m.Footer, footerCommand = m.Footer.Update(msg)
 
-	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand)
+	var tabsCommand tea.Cmd
+	m.Tabs, footerCommand = m.Tabs.Update(msg)
+
+	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand, tabsCommand)
 }

@@ -12,6 +12,7 @@ func (m Model) View() string {
 		lipgloss.JoinHorizontal(0,
 			m.Status.View(),
 			m.Accounts.View()),
+		m.Tabs.View(),
 		m.BlockExplorer.View(),
 		//m.Configs.View(),
 		//lipgloss.JoinHorizontal(0.2, m.BlockExplorer.View(),

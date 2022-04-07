@@ -9,6 +9,7 @@ import (
 
 const (
 	TopHeight = 13
+	TabHeight = 1
 )
 
 // Styles defines styles for the TUI.

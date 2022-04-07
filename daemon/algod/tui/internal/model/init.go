@@ -12,5 +12,6 @@ func (m Model) Init() tea.Cmd {
 		m.BlockExplorer.Init(),
 		m.Footer.Init(),
 		m.Configs.Init(),
+		m.Tabs.Init(),
 	)
 }
