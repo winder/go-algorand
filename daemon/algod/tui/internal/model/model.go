@@ -16,10 +16,8 @@ import (
 )
 
 const (
-	// MaxTopBoxHeight is the height of the top boxes. Hard coded to avoid dynamic margins.
-	MaxTopBoxHeight = style.TopHeight
-	initialWidth    = 80
-	initialHeight   = 50
+	initialWidth  = 80
+	initialHeight = 50
 )
 
 type activeComponent int
@@ -54,17 +52,18 @@ type Model struct {
 
 func New(s *algod.Server) Model {
 	styles := style.DefaultStyles()
+	tab := tabs.New([]string{"EXPLORER", "ACCOUNT", "CONFIGURATION", "HELP"})
 	// The tab content is the only flexible element.
 	// This means the height must grow or shrink to fill the available
 	// window height. It has access to the absolute height but needs to
 	// be informed about the space used by other elements.
-	tabContentMargin := MaxTopBoxHeight + style.TabHeight + 2 /* +2 for footer/help */
+	tabContentMargin := style.TopHeight + tab.Height() + 2 /* +2 for footer/help */
 	return Model{
 		active:        explorerTab,
 		Server:        s,
 		styles:        styles,
 		Status:        status.New(s, styles),
-		Tabs:          tabs.New([]string{"EXPLORER", "ACCOUNT", "CONFIGURATION",  "HELP"}),
+		Tabs:          tab,
 		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, tabContentMargin),
 		Configs:       configs.New(s, tabContentMargin),
 		Accounts:      accounts.NewModel(s, styles),
