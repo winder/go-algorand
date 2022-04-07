@@ -17,6 +17,8 @@ func (m Model) tabView() string {
 		return m.Configs.View()
 	case helpTab:
 		return m.About.View()
+	case utilitiesTab:
+		return m.Utilities.View()
 	}
 
 	return "unknown tab"
@@ -24,37 +26,6 @@ func (m Model) tabView() string {
 
 func art() string {
 	// TODO: This could take a width and indent/border to line up with the bottom
-	/*
-					art := `
-
-				         ////\\
-				        ////\\\\
-				       ////  \\////
-				      ////    ////
-				     ////    ////\\
-				    ////    ////\\\\
-				   ////    ////  \\\\
-				  ////    ////    \\\\
-				 ////    ////      \\\\
-				////    ////        \\\\
-				`
-
-			art := `
-		               .%@@@@@@@%
-		              :@@@@@@@@@@=
-		             -@@@@@=:@@@@@****=
-		            =@@@@@-  *@@@@@@@#
-		           +@@@@@:   .@@@@@@*
-		          *@@@@%.    -@@@@@#
-		        .%@@@@%.    =@@@@@@@.
-		       .@@@@@#     +@@@@@@@@*
-		      :@@@@@+     #@@@@%@@@@@.
-		     -@@@@@=    .%@@@@%.=@@@@#
-		    =@@@@@-    .%@@@@*   @@@@@:
-		   *@@@@%.    :@@@@@+    =@@@@%
-		  #@@@@%.    -@@@@@=      %@@@@-
-		.%@@@@#     +@@@@@-       -@@@@%`
-	*/
 	art := `
                 ▒█████ 
               ▒████████▒

@@ -34,7 +34,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, algod.StopFastCatchup(m.Server, networkFromID(m.Status.Network.GenesisID))
 		case key.Matches(msg, constants.Keys.Section):
 			m.active += 1
-			m.active %= 4
+			m.active %= 5
 			m.Tabs.SetActiveIndex(int(m.active))
 			return m, nil
 		}
@@ -46,6 +46,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case accountTab:
 		case configTab:
 		case helpTab:
+		case utilitiesTab:
 		}
 
 	case tea.WindowSizeMsg:
@@ -71,6 +72,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	m.About, cmd = m.About.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.Utilities, cmd = m.Utilities.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)

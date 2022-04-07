@@ -11,6 +11,8 @@ var (
 	//		Background(lipgloss.Color("#527772")).
 	//		Foreground(lipgloss.Color("#6dd588"))
 	//inactiveStyle = lipgloss.NewStyle()
+	activeColorForeground = lipgloss.Color("#6dd588")
+	activeColorBackground = lipgloss.Color("#527772")
 
 	defaultWidth = 20
 
@@ -28,7 +30,7 @@ var (
 	tabBorder = lipgloss.Border{
 		Top:         "─",
 		Bottom:      "─",
-		Left:        "│",
+		Left:        "│  ",
 		Right:       "│",
 		TopLeft:     "╭",
 		TopRight:    "╮",
@@ -37,8 +39,12 @@ var (
 	}
 	tab = lipgloss.NewStyle().
 		Border(tabBorder, true).
-		BorderForeground(highlight)
-	activeTab = tab.Copy().Border(activeTabBorder, true)
+		BorderForeground(highlight).
+		Padding(0, 2)
+	activeTab = tab.Copy().
+			Border(activeTabBorder, true).
+			Background(activeColorBackground).
+			Foreground(activeColorForeground)
 
 	tabGap = tab.Copy().
 		BorderTop(false).
