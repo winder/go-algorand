@@ -51,15 +51,20 @@ type Model struct {
 
 func New(s *algod.Server) Model {
 	styles := style.DefaultStyles()
+	// The tab content is the only flexible element.
+	// This means the height must grow or shrink to fill the available
+	// window height. It has access to the absolute height but needs to
+	// be informed about the space used by other elements.
+	tabContentMargin := MaxTopBoxHeight + style.TabHeight + 2 /* +2 for footer/help */
 	return Model{
 		active:        explorerTab,
 		Server:        s,
 		styles:        styles,
 		Status:        status.New(s, styles),
 		Tabs:          tabs.New([]string{"EXPLORER", "CONFIGURATION", "HELP"}),
-		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, MaxTopBoxHeight+style.TabHeight+2 /* +3 for tabs/footer/help */),
+		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, tabContentMargin),
 		Accounts:      accounts.NewModel(s),
-		Configs:       configs.New(s),
+		Configs:       configs.New(s, tabContentMargin),
 		Help:          help.New(),
 		Footer:        footer.New(styles),
 	}

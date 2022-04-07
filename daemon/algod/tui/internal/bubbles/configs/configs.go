@@ -29,19 +29,42 @@ var (
 )
 
 type Model struct {
-	content  string
+	heightMargin int
+
 	ready    bool
 	viewport viewport.Model
+	server   *algod.Server
 }
 
-func New(s *algod.Server) Model {
-	return Model{
-		content:  node.GetConfigs(algod.GetNode(s)),
-		viewport: viewport.New(60, 20),
+func New(s *algod.Server, heightMargin int) Model {
+	m := Model{
+		viewport:     viewport.New(0, 0),
+		heightMargin: heightMargin,
+		server:       s,
+	}
+	m.setSize(80, 20)
+	return m
+}
+
+type ConfigContent string
+
+func (m Model) getContent() tea.Cmd {
+	return func() tea.Msg {
+		return ConfigContent(node.GetConfigs(algod.GetNode(m.server)))
 	}
 }
+
 func (m Model) Init() tea.Cmd {
-	return nil
+	return m.getContent()
+}
+
+func (m *Model) setSize(width, height int) {
+	headerHeight := lipgloss.Height(m.headerView())
+	footerHeight := lipgloss.Height(m.footerView())
+
+	m.viewport.Width = 70
+	m.viewport.Height = height - m.heightMargin - headerHeight - footerHeight - 8
+	//m.viewport.YPosition = headerHeight + 1
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -50,22 +73,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 	//
-	switch msg.(type) {
+	switch msg := msg.(type) {
+	case ConfigContent:
+		m.ready = true
+		//m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
+		m.viewport.SetContent(string(msg))
 
 	case tea.WindowSizeMsg:
-		headerHeight := lipgloss.Height(m.headerView())
-		if !m.ready {
-			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
-			m.viewport.SetContent(m.content)
-			m.ready = true
-
-			m.viewport.YPosition = headerHeight + 1
-
-		} else {
-			m.viewport.Width = 60
-			m.viewport.Height = 20
-		}
-
+		m.setSize(msg.Width, msg.Height)
 	}
 
 	// Handle keyboard and mouse events in the viewport
