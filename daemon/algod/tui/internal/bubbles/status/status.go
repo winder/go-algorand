@@ -1,6 +1,7 @@
 package status
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -102,7 +103,7 @@ func (m Model) View() string {
 	builder := strings.Builder{}
 
 	builder.WriteString(fmt.Sprintf("%s %s\n", bold.Render("Network:"), m.Network.GenesisID))
-	builder.WriteString(fmt.Sprintf("%s %s\n", bold.Render("Genesis:"), m.Network.GenesisHash))
+	builder.WriteString(fmt.Sprintf("%s %s\n", bold.Render("Genesis:"), base64.StdEncoding.EncodeToString(m.Network.GenesisHash[:])))
 	// TODO: get rid of magic number
 	height := style.TopHeight - 2 - 3 // 3 is the padding/margin/border
 	// status
@@ -115,22 +116,24 @@ func (m Model) View() string {
 		switch {
 		case m.Status.Catchpoint != "":
 			// Catchpoint view
-			builder.WriteString(fmt.Sprintf("Catchpoint: %s\n\n", m.Status.Catchpoint))
+			builder.WriteString(fmt.Sprintf("\n    Catchpoint: %s\n", key.Render(strings.Split(m.Status.Catchpoint, "#")[0])))
 			var catchupStatus string
 			switch {
 			case m.Status.CatchpointCatchupAcquiredBlocks > 0:
-				catchupStatus = fmt.Sprintf("Verifying accounts: %d / %d\n", m.Status.CatchpointCatchupAcquiredBlocks, m.Status.CatchpointCatchupTotalBlocks)
+				catchupStatus = fmt.Sprintf("    Downloading blocks:   %5d / %d\n", m.Status.CatchpointCatchupAcquiredBlocks, m.Status.CatchpointCatchupTotalBlocks)
 			case m.Status.CatchpointCatchupVerifiedAccounts > 0:
-				catchupStatus = fmt.Sprintf("Verifying accounts: %d / %d\n", m.Status.CatchpointCatchupVerifiedAccounts, m.Status.CatchpointCatchupTotalAccounts)
+				catchupStatus = fmt.Sprintf("    Processing accounts:   %d / %d\n", m.Status.CatchpointCatchupVerifiedAccounts, m.Status.CatchpointCatchupTotalAccounts)
 			case m.Status.CatchpointCatchupProcessedAccounts > 0:
-				catchupStatus = fmt.Sprintf("Downloading accounts: %d / %d\n", m.Status.CatchpointCatchupProcessedAccounts, m.Status.CatchpointCatchupTotalAccounts)
+				catchupStatus = fmt.Sprintf("    Downloading accounts: %d / %d\n", m.Status.CatchpointCatchupProcessedAccounts, m.Status.CatchpointCatchupTotalAccounts)
+			default:
+				catchupStatus = "\n"
 			}
 			builder.WriteString(bold.Render(catchupStatus))
 			builder.WriteString("\n")
 			writeProgress(&builder, "Downloading accounts: ", m.progress, m.processedAcctsPct)
 			writeProgress(&builder, "Processing accounts:  ", m.progress, m.verifiedAcctsPct)
 			writeProgress(&builder, "Downloading blocks:   ", m.progress, m.acquiredBlksPct)
-			height -= 5
+			height -= 7
 		default:
 			builder.WriteString(fmt.Sprintf("Current round:   %s\n", key.Render(strconv.FormatUint(uint64(m.Status.LastRound), 10))))
 			builder.WriteString(fmt.Sprintf("Block wait time: %s\n", m.Status.TimeSinceLastRound()))
