@@ -61,7 +61,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.Footer, footerCommand = m.Footer.Update(msg)
 
 	var tabsCommand tea.Cmd
-	m.Tabs, footerCommand = m.Tabs.Update(msg)
+	m.Tabs, tabsCommand = m.Tabs.Update(msg)
 
-	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand, tabsCommand)
+	var aboutCommand tea.Cmd
+	m.About, aboutCommand = m.About.Update(msg)
+
+	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand, tabsCommand, aboutCommand)
 }

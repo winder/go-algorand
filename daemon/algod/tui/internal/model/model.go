@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/algorand/go-algorand/daemon/algod"
+	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/about"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/accounts"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/configs"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/bubbles/explorer"
@@ -36,6 +37,7 @@ type Model struct {
 	Tabs          tabs.Model
 	BlockExplorer explorer.Model
 	Configs       configs.Model
+	About         tea.Model
 	Help          help.Model
 	Footer        footer.Model
 
@@ -67,5 +69,6 @@ func New(s *algod.Server) Model {
 		Configs:       configs.New(s, tabContentMargin),
 		Help:          help.New(),
 		Footer:        footer.New(styles),
+		About:         about.New(tabContentMargin),
 	}
 }

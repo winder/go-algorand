@@ -13,5 +13,6 @@ func (m Model) Init() tea.Cmd {
 		m.Footer.Init(),
 		m.Configs.Init(),
 		m.Tabs.Init(),
+		m.About.Init(),
 	)
 }

@@ -1,9 +1,8 @@
 package model
 
 import (
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/constants"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // TODO: this function could implement a type and be passed to the tab view.
@@ -14,7 +13,7 @@ func (m Model) tabView() string {
 	case configTab:
 		return m.Configs.View()
 	case helpTab:
-		return "Help tab"
+		return m.About.View()
 	}
 
 	return "unknown tab"
