@@ -102,12 +102,8 @@ func (m Model) Init() tea.Cmd {
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	mt, _, mb, _ := m.style.Bottom.GetMargin()
-	pt, _, pb, _ := m.style.Bottom.GetPadding()
-	bt := m.style.Bottom.GetBorderStyle().GetTopSize() +
-		m.style.Bottom.GetBorderStyle().GetBottomSize()
-	h := mt + mb + pt + pb + bt
-	m.table.SetSize(width-m.widthMargin, height-m.heightMargin-h)
+	verticalFrameSize := m.style.Bottom.GetVerticalFrameSize()
+	m.table.SetSize(width-m.widthMargin, height-m.heightMargin-verticalFrameSize)
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
