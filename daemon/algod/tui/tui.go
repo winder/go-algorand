@@ -41,7 +41,7 @@ import (
 const host = "localhost"
 
 func teaHandler(_ ssh.Session) (tea.Model, []tea.ProgramOption) {
-	return model.New(algodServer), []tea.ProgramOption{tea.WithAltScreen()}
+	return model.New(algodServer), []tea.ProgramOption{tea.WithAltScreen(), tea.WithMouseCellMotion()}
 }
 
 var algodServer *algod.Server
@@ -50,7 +50,7 @@ var algodServer *algod.Server
 func Start(s *algod.Server, port uint64) {
 	if port == 0 {
 		// Run directly
-		p := tea.NewProgram(model.New(s), tea.WithAltScreen())
+		p := tea.NewProgram(model.New(s), tea.WithAltScreen(), tea.WithMouseCellMotion())
 		if err := p.Start(); err != nil {
 			fmt.Printf("Error in UI: %v", err)
 			os.Exit(1)

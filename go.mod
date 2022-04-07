@@ -3,6 +3,10 @@ module github.com/algorand/go-algorand
 go 1.16
 
 require (
+	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38 // indirect
+	github.com/alecthomas/colour v0.0.0-20160524082231-60882d9e2721 // indirect
+	github.com/alecthomas/kong v0.2.4 // indirect
+	github.com/alecthomas/repr v0.0.0-20180818092828-117648cd9897 // indirect
 	github.com/algorand/falcon v0.0.0-20220130164023-c9e1d466f123
 	github.com/algorand/go-codec/codec v1.1.8
 	github.com/algorand/go-deadlock v0.2.2
@@ -15,10 +19,12 @@ require (
 	github.com/calyptia/go-bubble-table v0.1.0 // indirect
 	github.com/charmbracelet/bubbles v0.10.3 // indirect
 	github.com/charmbracelet/bubbletea v0.20.0
+	github.com/charmbracelet/glamour v0.5.0 // indirect
 	github.com/charmbracelet/lipgloss v0.5.0 // indirect
 	github.com/charmbracelet/wish v0.3.0 // indirect
 	github.com/chrismcguire/gobberish v0.0.0-20150821175641-1d8adb509a0e
 	github.com/cpuguy83/go-md2man v1.0.8 // indirect
+	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20170701192655-dcfb0a7ac018
 	github.com/dchest/siphash v1.2.1
 	github.com/fatih/color v1.7.0

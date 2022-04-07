@@ -182,3 +182,11 @@ func StopFastCatchup(s *Server, network string) tea.Cmd {
 func GetNode(s *Server) *node.AlgorandFullNode {
 	return s.node
 }
+
+func GetConfigs() string {
+	configs, err := os.ReadFile(path.Join(os.Getenv("ALGORAND_DATA"), "config.json"))
+	if err != nil {
+		return "config.json file not found"
+	}
+	return string(configs)
+}
