@@ -3,6 +3,7 @@ package accounts
 import (
 	"fmt"
 	"github.com/algorand/go-algorand/daemon/algod"
+	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 	"github.com/algorand/go-algorand/data/basics"
 	tea "github.com/charmbracelet/bubbletea"
 	"sort"
@@ -25,12 +26,14 @@ type Model struct {
 
 	server *algod.Server
 	Err    error
+	style             *style.Styles
 }
 
-func NewModel(server *algod.Server) Model {
+func NewModel(server *algod.Server, style *style.Styles) Model {
 	rval := Model{
 		Accounts: make(map[basics.Address]*account),
 		server:   server,
+		style: style,
 	}
 
 	for _, a := range algod.AddressList {
@@ -120,5 +123,5 @@ func (m Model) View() string {
 		builder.WriteString("-----------------------\n")
 	}
 
-	return builder.String()
+	return m.style.Account.Render(builder.String())
 }

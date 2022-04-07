@@ -26,6 +26,7 @@ type activeComponent int
 
 const (
 	explorerTab activeComponent = iota
+	accountTab
 	configTab
 	helpTab
 )
@@ -63,10 +64,10 @@ func New(s *algod.Server) Model {
 		Server:        s,
 		styles:        styles,
 		Status:        status.New(s, styles),
-		Tabs:          tabs.New([]string{"EXPLORER", "CONFIGURATION", "HELP"}),
+		Tabs:          tabs.New([]string{"EXPLORER", "ACCOUNT", "CONFIGURATION",  "HELP"}),
 		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, tabContentMargin),
-		Accounts:      accounts.NewModel(s),
 		Configs:       configs.New(s, tabContentMargin),
+		Accounts:      accounts.NewModel(s, styles),
 		Help:          help.New(),
 		Footer:        footer.New(styles),
 		About:         about.New(tabContentMargin),

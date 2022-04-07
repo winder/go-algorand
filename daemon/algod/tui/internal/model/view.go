@@ -11,6 +11,8 @@ func (m Model) tabView() string {
 	switch activeComponent(m.Tabs.GetActiveIndex()) {
 	case explorerTab:
 		return m.BlockExplorer.View()
+	case accountTab:
+		return m.Accounts.View()
 	case configTab:
 		return m.Configs.View()
 	case helpTab:

@@ -17,6 +17,9 @@ type Styles struct {
 	ActiveBorderColor   lipgloss.Color
 	InactiveBorderColor lipgloss.Color
 
+	// Accounts area
+	Account lipgloss.Style
+
 	// Status area
 	Status         lipgloss.Style
 	StatusBoldText lipgloss.Style
@@ -113,6 +116,14 @@ func DefaultStyles() *Styles {
 	s.BottomPaginator = lipgloss.NewStyle().
 		Margin(0).
 		Align(lipgloss.Center)
+
+	// Accounts
+	s.Account = lipgloss.NewStyle().
+		Height(15).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(s.InactiveBorderColor).
+		Padding(0, 1, 0, 1).
+		MarginLeft(1)
 
 	// Status
 	s.Status = lipgloss.NewStyle().
