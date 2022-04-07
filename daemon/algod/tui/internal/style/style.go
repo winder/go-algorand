@@ -18,6 +18,10 @@ type Styles struct {
 
 	// Accounts area
 	Account lipgloss.Style
+	AccountBoldText lipgloss.Style
+	AccountGrayText lipgloss.Style
+	AccountBlueText lipgloss.Style
+	AccountYellowText lipgloss.Style
 
 	// Status area
 	Status         lipgloss.Style
@@ -118,11 +122,14 @@ func DefaultStyles() *Styles {
 
 	// Accounts
 	s.Account = lipgloss.NewStyle().
-		Height(15).
-		BorderStyle(lipgloss.RoundedBorder()).
+		//BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(s.InactiveBorderColor).
 		Padding(0, 1, 0, 1).
 		MarginLeft(1)
+	s.AccountBoldText = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#0693E3"))
+	s.AccountGrayText = lipgloss.NewStyle().Foreground(lipgloss.Color("#333333"))
+	s.AccountBlueText = lipgloss.NewStyle().Foreground(lipgloss.Color("#0693E3"))
+	s.AccountYellowText = lipgloss.NewStyle().Foreground(lipgloss.Color("#A3A322"))
 
 	// Status
 	s.Status = lipgloss.NewStyle().
