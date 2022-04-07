@@ -66,7 +66,7 @@ func New(s *algod.Server) Model {
 		Tabs:          tab,
 		BlockExplorer: explorer.NewModel(s, styles, initialWidth, 0, initialHeight, tabContentMargin),
 		Configs:       configs.New(s, tabContentMargin),
-		Accounts:      accounts.NewModel(s, styles),
+		Accounts:      accounts.NewModel(s, styles, initialHeight, tabContentMargin),
 		Help:          help.New(),
 		Footer:        footer.New(styles),
 		About:         about.New(tabContentMargin),

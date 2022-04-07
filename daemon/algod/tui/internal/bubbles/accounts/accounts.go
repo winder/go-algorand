@@ -5,10 +5,26 @@ import (
 	"github.com/algorand/go-algorand/daemon/algod"
 	"github.com/algorand/go-algorand/daemon/algod/tui/internal/style"
 	"github.com/algorand/go-algorand/data/basics"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"sort"
 	"strings"
 	"time"
+)
+
+var (
+	titleStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Right = "├"
+		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
+	}()
+
+	infoStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return titleStyle.Copy().BorderStyle(b)
+	}()
 )
 
 type balance struct {
@@ -24,17 +40,22 @@ type account struct {
 type Model struct {
 	Accounts map[basics.Address]*account
 
-	server *algod.Server
-	Err    error
-	style             *style.Styles
+	server   *algod.Server
+	Err      error
+	style    *style.Styles
+	viewport viewport.Model
+	heightMargin int
 }
 
-func NewModel(server *algod.Server, style *style.Styles) Model {
+func NewModel(server *algod.Server, style *style.Styles, initialHeight int,  heightMargin int) Model {
 	rval := Model{
 		Accounts: make(map[basics.Address]*account),
 		server:   server,
-		style: style,
+		style:    style,
+		viewport: viewport.New(0, 0),
+		heightMargin: heightMargin,
 	}
+	rval.setSize(80, initialHeight)
 
 	for _, a := range algod.AddressList {
 
@@ -55,22 +76,42 @@ func NewModel(server *algod.Server, style *style.Styles) Model {
 	return rval
 }
 
+func (m *Model) setSize(width, height int) {
+
+	footerHeight := lipgloss.Height(m.footerView())
+	m.viewport.Width = width
+	m.viewport.Height = height - m.heightMargin - footerHeight
+}
+
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		algod.GetAccountStatusMsg(m.server))
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
+	cmds = append(cmds,
+		tea.Tick(100*time.Millisecond, func(time.Time) tea.Msg {
+			return algod.GetAccountStatusMsg(m.server)()
+		}),
+	)
+
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.setSize(msg.Width, msg.Height)
+		break
 	case algod.AccountStatusMsg:
 
 		for msgAddress, msgBalance := range msg {
 
 			// Don't update if the balance didn't change
 			if msgBalance == m.Accounts[msgAddress].CurrentBalance.MicroAlgos {
-				return m, tea.Tick(100*time.Millisecond, func(time.Time) tea.Msg {
-					return algod.GetAccountStatusMsg(m.server)()
-				})
+				break
 			}
 
 			tmpList := m.Accounts[msgAddress].BalanceHistory
@@ -88,17 +129,26 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				TimeStamp:  time.Now(),
 			}
 
-			return m, tea.Tick(100*time.Millisecond, func(time.Time) tea.Msg {
-				return algod.GetAccountStatusMsg(m.server)()
-			})
 		}
 
+		m.viewport.SetContent(m.buildString())
+		break
 	}
 
-	return m, nil
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
+
+	builder := strings.Builder{}
+	builder.WriteString(fmt.Sprintf("%s\n%s", m.viewport.View(), m.footerView()))
+	return builder.String()
+}
+
+func (m Model) buildString() string {
 	builder := strings.Builder{}
 
 	keys := make([]string, 0, len(m.Accounts))
@@ -110,18 +160,32 @@ func (m Model) View() string {
 	for _, account := range keys {
 		accountType, _ := basics.UnmarshalChecksumAddress(account)
 		v := m.Accounts[accountType]
-		builder.WriteString(fmt.Sprintf("Address: %s\n", account))
-		builder.WriteString(fmt.Sprintf("  Balance: %f Algos @ %s\n", float64(v.CurrentBalance.MicroAlgos)/1000000.0, v.CurrentBalance.TimeStamp.Format("2006-01-02 15:04:05.1234")))
+		builder.WriteString(fmt.Sprintf("%s %s\n", m.style.AccountBoldText.Render("Account:"), m.style.AccountYellowText.Render(account)))
+
+		algoStr := fmt.Sprintf("         %f Algos", float64(v.CurrentBalance.MicroAlgos)/1000000.0)
+		builder.WriteString(m.style.AccountBlueText.Render(algoStr) + "\n")
 		for _, a := range v.BalanceHistory {
 			if a.MicroAlgos == 0 {
-				builder.WriteString(fmt.Sprintf("     --> -- Algos @ --\n"))
+				builder.WriteString(fmt.Sprintf("\n"))
 			} else {
-				builder.WriteString(fmt.Sprintf("     --> %f Algos @ %s\n", float64(a.MicroAlgos)/1000000, a.TimeStamp.Format("2006-01-02 15:04:05.1234")))
+				pastStr := fmt.Sprintf("         %f Algos @ %s\n", float64(a.MicroAlgos)/1000000, a.TimeStamp.Format("2006-01-02 15:04:05.1234"))
+				builder.WriteString(pastStr)
 			}
 		}
 
-		builder.WriteString("-----------------------\n")
 	}
 
 	return m.style.Account.Render(builder.String())
+}
+func (m Model) footerView() string {
+
+	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
+	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(info)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
+}
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
