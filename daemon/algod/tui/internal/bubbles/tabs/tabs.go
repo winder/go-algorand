@@ -108,23 +108,6 @@ func max(a, b int) int {
 }
 
 func (m Model) View() string {
-	/*
-		var buf strings.Builder
-		buf.WriteString("___")
-		len := 3
-		for i, col := range m.tabs {
-			renderer := m.InactiveStyle
-			if i == m.index {
-				renderer = m.ActiveStyle
-			}
-			buf.WriteString(renderer.Render(strings.ReplaceAll(fmt.Sprintf("__%-*s__", m.tabWidth, col), " ", "_")))
-			len += 4 + m.tabWidth
-		}
-
-		// TODO: If width-l is less than 0 this needs to be truncated instead
-		buf.WriteString(strings.Repeat("_", m.width-len))
-		return buf.String()
-	*/
 	doc := strings.Builder{}
 
 	// Tabs
@@ -145,14 +128,11 @@ func (m Model) View() string {
 			lipgloss.Top,
 			renderedTabs...,
 		)
-		gap := tabGap.Render(strings.Repeat(" ", max(0, m.width-lipgloss.Width(row)-2)))
-		//prefix :=
-		//suffix := lipgloss.JoinVertical(1, strings.Repeat(" ", m.width-))
+		gap := tabGap.Render(strings.Repeat(" ", max(0, m.width-lipgloss.Width(row))))
 
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 		doc.WriteString(row)
 	}
 
 	return doc.String()
-	//return docStyle.Render(doc.String())
 }

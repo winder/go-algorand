@@ -8,6 +8,7 @@ import (
 	table "github.com/calyptia/go-bubble-table"
 
 	"github.com/algorand/go-algorand/data/transactions"
+	"github.com/algorand/go-algorand/protocol"
 )
 
 // transactionItem is used by the list bubble.
@@ -15,7 +16,17 @@ type transactionItem struct {
 	*transactions.SignedTxnInBlock
 }
 
-var transactionTableHeader = []string{"  INTRA", "type", "sigtype", "fee", "has-note", "sender"}
+func formatAmount(txn *transactions.SignedTxnInBlock) string {
+	switch txn.Txn.Type {
+	case protocol.PaymentTx:
+		return fmt.Sprintf("%f", float64(txn.Txn.PaymentTxnFields.Amount.Raw)/10000)
+	case protocol.AssetTransferTx:
+		return strconv.FormatUint(txn.Txn.AssetTransferTxnFields.AssetAmount, 10)
+	}
+	return "-"
+}
+
+var transactionTableHeader = []string{"  INTRA", "type", "amount", "sigtype", "fee", "has-note", "sender"}
 
 func computeTxnRow(b transactionItem) string {
 	var sigtype string
@@ -29,8 +40,9 @@ func computeTxnRow(b transactionItem) string {
 		sigtype = "inner-txn"
 	}
 
-	return fmt.Sprintf("\t%s\t%s\t%d\t%t\t%s",
+	return fmt.Sprintf("\t%s\t%s\t%s\t%d\t%t\t%s",
 		b.Txn.Type,
+		formatAmount(b.SignedTxnInBlock),
 		sigtype,
 		b.Txn.Fee.Raw,
 		len(b.Txn.Note) > 0,
@@ -58,11 +70,6 @@ func (i transactionItem) Render(w io.Writer, model table.Model, index int) {
 }
 
 func (m *Model) updateTxnTable() {
-	// TODO: how to check for empty m.block?
-	//if m.block != m.bl {
-	//	return
-	//}
-
 	var rows []table.Row
 	for _, t := range m.transactions {
 		rows = append(rows, t)
