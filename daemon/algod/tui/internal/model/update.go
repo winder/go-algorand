@@ -15,9 +15,15 @@ func networkFromID(genesisID string) string {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
 	switch msg := msg.(type) {
 	case algod.NetworkMsg:
 		m.network = msg
+
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, constants.Keys.Quit):
@@ -45,26 +51,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.lastResize = msg
 	}
 
-	var statusCommand tea.Cmd
-	m.Status, statusCommand = m.Status.Update(msg)
+	m.Status, cmd = m.Status.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var accountsCommand tea.Cmd
-	m.Accounts, accountsCommand = m.Accounts.Update(msg)
+	m.Accounts, cmd = m.Accounts.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var explorerCommand tea.Cmd
-	m.BlockExplorer, explorerCommand = m.BlockExplorer.Update(msg)
+	m.BlockExplorer, cmd = m.BlockExplorer.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var configsCommand tea.Cmd
-	m.Configs, configsCommand = m.Configs.Update(msg)
+	m.Configs, cmd = m.Configs.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var footerCommand tea.Cmd
-	m.Footer, footerCommand = m.Footer.Update(msg)
+	m.Footer, cmd = m.Footer.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var tabsCommand tea.Cmd
-	m.Tabs, tabsCommand = m.Tabs.Update(msg)
+	m.Tabs, cmd = m.Tabs.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var aboutCommand tea.Cmd
-	m.About, aboutCommand = m.About.Update(msg)
+	m.About, cmd = m.About.Update(msg)
+	cmds = append(cmds, cmd)
 
-	return m, tea.Batch(statusCommand, accountsCommand, explorerCommand, configsCommand, footerCommand, tabsCommand, aboutCommand)
+	return m, tea.Batch(cmds...)
 }

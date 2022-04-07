@@ -30,10 +30,8 @@ var (
 
 type Model struct {
 	heightMargin int
-
-	ready    bool
-	viewport viewport.Model
-	server   *algod.Server
+	viewport     viewport.Model
+	server       *algod.Server
 }
 
 func New(s *algod.Server, heightMargin int) Model {
@@ -62,9 +60,8 @@ func (m *Model) setSize(width, height int) {
 	headerHeight := lipgloss.Height(m.headerView())
 	footerHeight := lipgloss.Height(m.footerView())
 
-	m.viewport.Width = 70
+	m.viewport.Width = width
 	m.viewport.Height = height - m.heightMargin - headerHeight - footerHeight
-	//m.viewport.YPosition = headerHeight + 1
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -72,14 +69,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
-	//
+
 	switch msg := msg.(type) {
 	case ConfigContent:
-		m.ready = true
-		//m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
-		// this seems to work.
-		//m.viewport.SetContent(strings.Repeat("This is a teat\n", 100))
-
+		// For some reason tabs make the viewport go crazy
+		//m.viewport.SetContent(string(msg))
 		m.viewport.SetContent(strings.ReplaceAll(string(msg), "\t", "    "))
 
 	case tea.WindowSizeMsg:
