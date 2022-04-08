@@ -372,9 +372,11 @@ func run() int {
 	}
 
 	if ui {
-		fmt.Println("Starting UI in 1 second.")
-		time.Sleep(time.Second)
-		go tui.Start(&s, uiPort)
+		go func() {
+			fmt.Println("Starting UI in 1 seconds.")
+			time.Sleep(time.Second)
+			tui.Start(&s, uiPort)
+		}()
 	}
 	s.Start()
 	return 0
