@@ -38,7 +38,7 @@ import (
 	"github.com/gliderlabs/ssh"
 )
 
-const host = "localhost"
+const host = "0.0.0.0"
 
 func teaHandler(_ ssh.Session) (tea.Model, []tea.ProgramOption) {
 	return model.New(algodServer), []tea.ProgramOption{tea.WithAltScreen(), tea.WithMouseCellMotion()}
