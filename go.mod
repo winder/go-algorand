@@ -18,7 +18,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/gen2brain/beeep v0.0.0-20180718162406-4e430518395f
 	github.com/getkin/kin-openapi v0.22.0
-	github.com/go-python/gpython v0.1.0 // indirect
+	github.com/go-python/gpython v0.1.0
 	github.com/gofrs/flock v0.7.0
 	github.com/google/go-querystring v1.0.0
 	github.com/gorilla/mux v1.6.2
@@ -39,6 +39,7 @@ require (
 )
 
 require (
+	github.com/algorand/go-algorand-sdk v1.17.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
@@ -72,4 +73,5 @@ require (
 	gopkg.in/toast.v1 v1.0.0-20180812000517-0a84660828b2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	layeh.com/gopher-json v0.0.0-20201124131017-552bb3c4c3bf // indirect
 )

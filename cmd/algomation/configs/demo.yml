@@ -1,0 +1,10 @@
+contracts:
+    contract1:
+        description: my first contract
+        local_int: 1
+        local_byte: 1
+        global_int: 1
+        global_byte: 1
+        approval_program: "int 1"
+        clear_state_program: "int 1"
+        extra_program_pages: 1
