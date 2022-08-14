@@ -1,0 +1,37 @@
+{
+  "Genesis": {
+    "NetworkName": "tbd",
+    "LastPartKeyRound": 3000,
+    "Wallets": [
+      {
+        "Name": "Online1",
+        "Stake": 30,
+        "Online": true
+      },
+      {
+        "Name": "Offline1",
+        "Stake": 20,
+        "Online": false
+      },
+      {
+        "Name": "Offline2",
+        "Stake": 50,
+        "Online": false
+      }
+    ]
+  },
+  "Nodes": [
+    {
+      "Name": "Primary",
+      "IsRelay": true,
+      "Wallets": [
+        { "Name": "Online1",
+          "ParticipationOnly": false },
+        { "Name": "Offline1",
+          "ParticipationOnly": true },
+        { "Name": "Offline2",
+          "ParticipationOnly": true }
+      ]
+    }
+  ]
+}
