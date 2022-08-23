@@ -70,7 +70,7 @@ func makeRPCServerCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&config.clean, "clean", true, "When set the temp dir is deleted on start.")
 	cmd.Flags().StringVarP(&config.binDir, "binDir", "b", "", "Directory containing goal.")
 	cmd.Flags().StringVarP(&config.tmpDir, "tmpDir", "t", "", "Temporary directory scratch space.")
-	cmd.MarkFlagRequired("binDir")
+	//cmd.MarkFlagRequired("binDir")
 	cmd.MarkFlagRequired("tmpDir")
 
 	return cmd

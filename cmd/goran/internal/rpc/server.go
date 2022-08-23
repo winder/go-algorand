@@ -28,6 +28,7 @@ import (
 
 // MakeServer creates the RPC server handler.
 func MakeServer(binDir, tmpDir string) (http.Handler, error) {
+	// TODO: if binDir is empty, look for goal/algod on path.
 	nw, err := core.MakeNetwork(binDir, tmpDir)
 	if err != nil {
 		return nil, fmt.Errorf("MakeServer() failed to make core: %w", err)

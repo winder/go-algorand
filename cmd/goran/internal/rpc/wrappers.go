@@ -28,16 +28,21 @@ type Network struct {
 }
 
 // Start wraps the core Network.Start function.
-func (n *Network) Start(r *http.Request, args *core.NetworkStartArgs, reply *core.NetworkStatusReply) error {
-	return n.core.Start(args, reply)
+func (n *Network) Start(r *http.Request, args *core.NetworkStartArgs, reply *core.NetworkStartReply) error {
+	return n.core.Start(*args, reply)
 }
 
-// Stop wraps the core Network.Stop function.
-func (n *Network) Stop(r *http.Request, args *core.NetworkStopArgs, reply *core.NetworkStopReply) error {
-	return n.core.Stop(args, reply)
+// Destroy wraps the core Network.Destroy function.
+func (n *Network) Destroy(r *http.Request, args *core.NetworkDestroyArgs, reply *core.NetworkDestroyReply) error {
+	return n.core.Destroy(*args, reply)
 }
 
 // Status wraps the core Network.Status function.
 func (n *Network) Status(r *http.Request, args *core.NetworkStatusArgs, reply *core.NetworkStatusReply) error {
-	return n.core.Status(args, reply)
+	return n.core.Status(*args, reply)
+}
+
+// List returns a list of all available networks.
+func (n *Network) List(r *http.Request, args *core.NetworkListArgs, reply *core.NetworkListReply) error {
+	return n.core.List(*args, reply)
 }
