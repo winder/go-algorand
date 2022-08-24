@@ -33,13 +33,19 @@ func MakeServer(binDir, tmpDir string) (http.Handler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("MakeServer() failed to make core: %w", err)
 	}
+
 	coreNet := &Network{
 		core: nw,
+	}
+
+	coreSystem := &System{
+		core: &core.System{},
 	}
 
 	s := rpc.NewServer()
 	s.RegisterCodec(json2.NewCodec(), "application/json")
 	s.RegisterService(coreNet, "")
+	s.RegisterService(coreSystem, "")
 
 	return s, nil
 }

@@ -46,3 +46,11 @@ func (n *Network) Status(r *http.Request, args *core.NetworkStatusArgs, reply *c
 func (n *Network) List(r *http.Request, args *core.NetworkListArgs, reply *core.NetworkListReply) error {
 	return n.core.List(*args, reply)
 }
+
+type System struct {
+	core *core.System
+}
+
+func (s *System) Shutdown(r *http.Request, args *core.SystemShutdownArgs, reply *core.SystemShutdownReply) error {
+	return s.core.Shutdown(*args, reply)
+}

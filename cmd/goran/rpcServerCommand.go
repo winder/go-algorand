@@ -61,6 +61,8 @@ func makeRPCServerCommand() *cobra.Command {
 			}
 
 			http.Handle("/rpc", server)
+
+			// TODO: Trap shutdown and turn off all running algod instances.
 			http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
 		},
 	}
@@ -68,7 +70,7 @@ func makeRPCServerCommand() *cobra.Command {
 	// TODO: Should this use the ":<port>" pattern?
 	cmd.Flags().Uint64VarP(&config.port, "port", "p", 60544, "Port to server the RPC server.")
 	cmd.Flags().BoolVar(&config.clean, "clean", true, "When set the temp dir is deleted on start.")
-	cmd.Flags().StringVarP(&config.binDir, "binDir", "b", "", "Directory containing goal.")
+	cmd.Flags().StringVarP(&config.binDir, "binDir", "b", "", "Directory containing goal/algod/etc, PATH used if not set.")
 	cmd.Flags().StringVarP(&config.tmpDir, "tmpDir", "t", "", "Temporary directory scratch space.")
 	//cmd.MarkFlagRequired("binDir")
 	cmd.MarkFlagRequired("tmpDir")
