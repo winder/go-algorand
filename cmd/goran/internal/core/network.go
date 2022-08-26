@@ -259,6 +259,7 @@ func (s *Network) Start(args NetworkStartArgs, reply *NetworkStartReply) error {
 
 // NetworkDestroyArgs args for the Network.Destroy function.
 type NetworkDestroyArgs struct {
+	All  bool
 	Name string
 }
 
@@ -269,6 +270,10 @@ type NetworkDestroyReply struct {
 
 // Destroy a running private network known by the system.
 func (s *Network) Destroy(args NetworkDestroyArgs, reply *NetworkDestroyReply) error {
+	if args.All {
+		// TODO: destroy all networks.
+	}
+
 	network, ok := s.networks[args.Name]
 	if !ok {
 		return fmt.Errorf("Destroy(): unknown network '%s'", args.Name)

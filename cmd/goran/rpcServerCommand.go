@@ -43,6 +43,48 @@ type rpcServerConfig struct {
 	idleShutdown time.Duration
 }
 
+func run(config rpcServerConfig) error {
+	if config.clean {
+		err := os.RemoveAll(config.tmpDir)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if err := os.MkdirAll(config.tmpDir, 0755); err != nil {
+		panic(err)
+	}
+
+	// Create a "kill" channel to allow the server to shut down gracefully
+	kill := make(chan os.Signal, 1)
+
+	// Timeouts can also send on the kill channel; because signal.Notify
+	// will not block, this shouldn't cause an issue. From docs: "Package
+	// signal will not block sending to c"
+	signal.Notify(kill, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
+	rcpServer, rpcShutdownFunc, err := rpc.MakeServer(config.binDir, config.tmpDir, kill, config.idleShutdown)
+	if err != nil {
+		panic(err)
+	}
+
+	srv := &http.Server{
+		Addr: fmt.Sprintf(":%d", config.port),
+	}
+	http.Handle("/rpc", rcpServer)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Println("error from ListenAndServe(): %s", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Graceful shutdown handling, in case the server times out.
+	<-kill
+	rpcShutdownFunc()
+	return nil
+}
+
 func makeRPCServerCommand() *cobra.Command {
 	var config rpcServerConfig
 
@@ -50,43 +92,7 @@ func makeRPCServerCommand() *cobra.Command {
 		Use:   "rpc-server",
 		Short: "Serve a JSON-RPC interface for automation utilities.",
 		Run: func(cmd *cobra.Command, args []string) {
-			if config.clean {
-				err := os.RemoveAll(config.tmpDir)
-				if err != nil {
-					panic(err)
-				}
-			}
-			if err := os.MkdirAll(config.tmpDir, 0755); err != nil {
-				panic(err)
-			}
-
-			// Create a "kill" channel to allow the server to shut down gracefully
-			kill := make(chan os.Signal, 1)
-
-			// Graceful shutdown handling, in case the server times out.
-			go func() {
-				<-kill
-
-				// TODO: gracefully terminate server and http server.
-				// TODO: shutdown all algod instances.
-				os.Exit(0)
-			}()
-
-			// Timeouts can also send on the kill channel; because signal.Notify
-			// will not block, this shouldn't cause an issue. From docs: "Package
-			// signal will not block sending to c"
-			signal.Notify(kill, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-			rcpServer, err := rpc.MakeServer(config.binDir, config.tmpDir, kill, config.idleShutdown)
-			if err != nil {
-				panic(err)
-			}
-
-			srv := &http.Server{
-				Addr: fmt.Sprintf(":%d", config.port),
-			}
-			http.Handle("/rpc", rcpServer)
-			srv.ListenAndServe()
+			run(config)
 		},
 	}
 

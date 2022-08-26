@@ -56,13 +56,13 @@ func makeWatchdogCallback(kill chan os.Signal, idleTimeout time.Duration) func()
 }
 
 // MakeServer creates the RPC server handler.
-func MakeServer(binDir, tmpDir string, kill chan os.Signal, idleTimeout time.Duration) (http.Handler, error) {
+func MakeServer(binDir, tmpDir string, kill chan os.Signal, idleTimeout time.Duration) (http.Handler, func(), error) {
 	idleRefreshCallback := makeWatchdogCallback(kill, idleTimeout)
 
 	// TODO: if binDir is empty, look for goal/algod on path.
 	nw, err := core.MakeNetwork(binDir, tmpDir)
 	if err != nil {
-		return nil, fmt.Errorf("MakeServer() failed to make core: %w", err)
+		return nil, nil, fmt.Errorf("MakeServer() failed to make core: %w", err)
 	}
 
 	coreNet := &Network{
@@ -81,5 +81,11 @@ func MakeServer(binDir, tmpDir string, kill chan os.Signal, idleTimeout time.Dur
 		idleRefreshCallback()
 	})
 
-	return s, nil
+	shutdown := func() {
+		args := core.NetworkDestroyArgs{All: true}
+		var reply core.NetworkDestroyReply
+		coreNet.core.Destroy(args, &reply)
+	}
+
+	return s, shutdown, nil
 }
