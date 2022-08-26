@@ -54,3 +54,7 @@ type System struct {
 func (s *System) Shutdown(r *http.Request, args *core.SystemShutdownArgs, reply *core.SystemShutdownReply) error {
 	return s.core.Shutdown(*args, reply)
 }
+
+func (s *System) Health(r *http.Request, args *core.SystemHealthArgs, reply *core.SystemHealthReply) error {
+	return s.core.Health(*args, reply)
+}

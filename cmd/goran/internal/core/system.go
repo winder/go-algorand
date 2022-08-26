@@ -25,3 +25,16 @@ func (s *System) Shutdown(args SystemShutdownArgs, reply *SystemShutdownReply) e
 	}()
 	return nil
 }
+
+type SystemHealthArgs struct {
+}
+
+type SystemHealthReply struct {
+	Running bool
+}
+
+// Health the RPC server.
+func (s *System) Health(args SystemHealthArgs, reply *SystemHealthReply) error {
+	reply.Running = true
+	return nil
+}
