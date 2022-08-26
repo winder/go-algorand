@@ -19,6 +19,9 @@ package rpc
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"syscall"
+	"time"
 
 	"github.com/gorilla/rpc/v2"
 	"github.com/gorilla/rpc/v2/json2"
@@ -26,8 +29,36 @@ import (
 	"github.com/algorand/go-algorand/cmd/goran/internal/core"
 )
 
+// makeWatchdogCallback generates a callback function that either 1. does
+// nothing if idleTimeout is 0, or 2. kicks a watchdog timer that will send a kill
+// signal when it expires.
+func makeWatchdogCallback(kill chan os.Signal, idleTimeout time.Duration) func() {
+	// If Timeout is nil, then we will not kill kmd after a timeout
+	if idleTimeout == 0 {
+		return func() {}
+	}
+
+	timer := time.AfterFunc(idleTimeout, func() {
+		fmt.Println("killing rpc server after timeout.")
+		kill <- syscall.SIGINT
+	})
+
+	// Return a callback function that resets the timer if it hasn't
+	// already expired
+	return func() {
+		// From docs: For a timer created with AfterFunc(d, f), if
+		// t.Stop returns false, then the timer has already expired
+		// and the function f has been started in its own goroutine
+		if timer.Stop() {
+			timer.Reset(idleTimeout)
+		}
+	}
+}
+
 // MakeServer creates the RPC server handler.
-func MakeServer(binDir, tmpDir string) (http.Handler, error) {
+func MakeServer(binDir, tmpDir string, kill chan os.Signal, idleTimeout time.Duration) (http.Handler, error) {
+	idleRefreshCallback := makeWatchdogCallback(kill, idleTimeout)
+
 	// TODO: if binDir is empty, look for goal/algod on path.
 	nw, err := core.MakeNetwork(binDir, tmpDir)
 	if err != nil {
@@ -46,6 +77,9 @@ func MakeServer(binDir, tmpDir string) (http.Handler, error) {
 	s.RegisterCodec(json2.NewCodec(), "application/json")
 	s.RegisterService(coreNet, "")
 	s.RegisterService(coreSystem, "")
+	s.RegisterBeforeFunc(func(_ *rpc.RequestInfo) {
+		idleRefreshCallback()
+	})
 
 	return s, nil
 }

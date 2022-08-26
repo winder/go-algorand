@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -33,10 +36,11 @@ func init() {
 var rpcServer = makeRPCServerCommand()
 
 type rpcServerConfig struct {
-	port   uint64
-	binDir string
-	tmpDir string
-	clean  bool
+	port         uint64
+	binDir       string
+	tmpDir       string
+	clean        bool
+	idleShutdown time.Duration
 }
 
 func makeRPCServerCommand() *cobra.Command {
@@ -55,15 +59,34 @@ func makeRPCServerCommand() *cobra.Command {
 			if err := os.MkdirAll(config.tmpDir, 0755); err != nil {
 				panic(err)
 			}
-			server, err := rpc.MakeServer(config.binDir, config.tmpDir)
+
+			// Create a "kill" channel to allow the server to shut down gracefully
+			kill := make(chan os.Signal, 1)
+
+			// Graceful shutdown handling, in case the server times out.
+			go func() {
+				<-kill
+
+				// TODO: gracefully terminate server and http server.
+				// TODO: shutdown all algod instances.
+				os.Exit(0)
+			}()
+
+			// Timeouts can also send on the kill channel; because signal.Notify
+			// will not block, this shouldn't cause an issue. From docs: "Package
+			// signal will not block sending to c"
+			signal.Notify(kill, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
+			rcpServer, err := rpc.MakeServer(config.binDir, config.tmpDir, kill, config.idleShutdown)
 			if err != nil {
 				panic(err)
 			}
 
-			http.Handle("/rpc", server)
-
-			// TODO: Trap shutdown and turn off all running algod instances.
-			http.ListenAndServe(fmt.Sprintf(":%d", config.port), nil)
+			srv := &http.Server{
+				Addr: fmt.Sprintf(":%d", config.port),
+			}
+			http.Handle("/rpc", rcpServer)
+			srv.ListenAndServe()
 		},
 	}
 
@@ -74,6 +97,7 @@ func makeRPCServerCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&config.tmpDir, "tmpDir", "t", "", "Temporary directory scratch space.")
 	//cmd.MarkFlagRequired("binDir")
 	cmd.MarkFlagRequired("tmpDir")
+	cmd.Flags().DurationVarP(&config.idleShutdown, "idleShutdown", "i", 0, "When set, automatically shutdown RPC server when idle for this duration.")
 
 	return cmd
 }
