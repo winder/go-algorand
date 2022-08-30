@@ -1005,16 +1005,7 @@ func (c *Client) ExportKey(walletHandle []byte, password, account string) (resp 
 	if err != nil {
 		return
 	}
-
-	// export the secret key for the bidder
-	req := kmdapi.APIV1POSTKeyExportRequest{
-		WalletHandleToken: string(walletHandle),
-		Address:           account,
-		WalletPassword:    password,
-	}
-	resp = kmdapi.APIV1POSTKeyExportResponse{}
-	err = kmd.DoV1Request(req, &resp)
-	return resp, err
+	return kmd.ExportKey(walletHandle, password, account)
 }
 
 // ConsensusParams returns the consensus parameters for the protocol active at the specified round

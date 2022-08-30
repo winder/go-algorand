@@ -26,7 +26,10 @@ import (
 	"strings"
 
 	"github.com/algorand/go-algorand/config"
+	"github.com/algorand/go-algorand/crypto"
+	"github.com/algorand/go-algorand/crypto/passphrase"
 	generatedV2 "github.com/algorand/go-algorand/daemon/algod/api/server/v2/generated"
+	"github.com/algorand/go-algorand/data/basics"
 	"github.com/algorand/go-algorand/netdeploy"
 	"github.com/algorand/go-algorand/nodecontrol"
 	"github.com/algorand/go-algorand/util"
@@ -36,11 +39,18 @@ import (
 //go:embed OneNode.json
 var networkTemplate string
 
+type AccountData struct {
+	Account    string
+	Mnemonic   string
+	PrivateKey []byte
+}
+
 // NetworkData is stored for each active network.
 type NetworkData struct {
 	rootDir    string
 	bindir     string
 	privatenet netdeploy.Network
+	accounts   []AccountData
 }
 
 // Network maintains state for the networks being controlled by goran.
@@ -76,10 +86,36 @@ func createNetwork(args *NetworkStartArgs, rootDir string) (*NetworkData, error)
 	}
 	os.WriteFile(path.Join(rootDir, metadataFile), data, 0755)
 
+	keys, err := network.GetPrivateKeys(args.BinDir)
+	if err != nil {
+		return nil, fmt.Errorf("initializeNetworks() failed to get private keys: %w", err)
+	}
+
+	var accounts []AccountData
+	for _, key := range keys {
+		seed, err := crypto.SecretKeyToSeed(key)
+		if err != nil {
+			return nil, fmt.Errorf("initializeNetworks(): failed to make seed: %w", err)
+		}
+		mnemonic, err := passphrase.KeyToMnemonic(seed[:])
+		if err != nil {
+			return nil, fmt.Errorf("initializeNetworks(): failed to make mnemonic: %w", err)
+		}
+		secrets := crypto.GenerateSignatureSecrets(seed)
+		address := basics.Address(secrets.SignatureVerifier)
+
+		accounts = append(accounts, AccountData{
+			Account:    address.String(),
+			Mnemonic:   mnemonic,
+			PrivateKey: key[:],
+		})
+	}
+
 	return &NetworkData{
 		privatenet: network,
 		bindir:     args.BinDir,
 		rootDir:    rootDir,
+		accounts:   accounts,
 	}, nil
 }
 
@@ -169,6 +205,7 @@ type NetworkStartReply struct {
 	Token      string
 	AdminToken string
 	URL        string
+	Accounts   []AccountData
 }
 
 // Start a private network.
@@ -253,6 +290,7 @@ func (s *Network) Start(args NetworkStartArgs, reply *NetworkStartReply) error {
 		Token:      token,
 		AdminToken: adminToken,
 		URL:        address,
+		Accounts:   network.accounts,
 	}
 	return nil
 }

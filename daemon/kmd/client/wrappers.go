@@ -187,6 +187,17 @@ func (kcl KMDClient) ImportKey(walletHandle []byte, secretKey crypto.PrivateKey)
 	return
 }
 
+// ExportKey exports the private key of the passed account, assuming it's available
+func (kcl KMDClient) ExportKey(walletHandle []byte, password, account string) (resp kmdapi.APIV1POSTKeyExportResponse, err error) {
+	req := kmdapi.APIV1POSTKeyExportRequest{
+		WalletHandleToken: string(walletHandle),
+		Address:           account,
+		WalletPassword:    password,
+	}
+	err = kcl.DoV1Request(req, &resp)
+	return
+}
+
 // ExportMasterDerivationKey wraps kmdapi.APIV1POSTMasterKeyExportRequest
 func (kcl KMDClient) ExportMasterDerivationKey(walletHandle []byte, walletPassword []byte) (resp kmdapi.APIV1POSTMasterKeyExportResponse, err error) {
 	req := kmdapi.APIV1POSTMasterKeyExportRequest{

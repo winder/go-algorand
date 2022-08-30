@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -29,6 +30,7 @@ import (
 	generatedV2 "github.com/algorand/go-algorand/daemon/algod/api/server/v2/generated"
 
 	"github.com/algorand/go-algorand/config"
+	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/gen"
 	"github.com/algorand/go-algorand/libgoal"
 	"github.com/algorand/go-algorand/nodecontrol"
@@ -179,6 +181,78 @@ func (n Network) GetNodeDir(nodeName string) (string, error) {
 		return possibleDir, nil
 	}
 	return "", fmt.Errorf("no node exists that is named '%s'", nodeName)
+}
+
+// GetPrivateKeys returns all keys for the private network.
+func (n Network) GetPrivateKeys(binDir string) ([]crypto.PrivateKey, error) {
+	getKey := func(nodeDir string) ([]crypto.PrivateKey, error) {
+		keys := make([]crypto.PrivateKey, 0)
+		nc := nodecontrol.MakeNodeController(binDir, n.getNodeFullPath(nodeDir))
+		nc.SetKMDDataDir(path.Join(nc.GetDataDir(), libgoal.DefaultKMDDataDir))
+		_, err := nc.StartKMD(nodecontrol.KMDStartArgs{TimeoutSecs: 30})
+		if err != nil {
+			return nil, fmt.Errorf("GetPrivateKeys: StartKMD err: %w", err)
+		}
+		kmd, err := nc.KMDClient()
+		if err != nil {
+			return nil, fmt.Errorf("GetPrivateKeys: KMDClient err: %w", err)
+		}
+		wallets, err := kmd.ListWallets()
+		if err != nil {
+			return nil, fmt.Errorf("GetPrivateKeys: ListWallets err: %w", err)
+		}
+		if wallets.GetError() != nil {
+			return nil, fmt.Errorf("GetPrivateKeys: ListWallets response err: %w", wallets.GetError())
+		}
+
+		for _, wallet := range wallets.Wallets {
+			walletHandle, err := kmd.InitWallet([]byte(wallet.ID), []byte(""))
+			if err != nil {
+				return nil, fmt.Errorf("GetPrivateKeys: InitWallet err: %w", err)
+			}
+			if walletHandle.GetError() != nil {
+				return nil, fmt.Errorf("GetPrivateKeys: InitWallet response err: %w", walletHandle.GetError())
+			}
+			addrList, err := kmd.ListKeys([]byte(walletHandle.WalletHandleToken))
+			if err != nil {
+				return nil, fmt.Errorf("GetPrivateKeys: ListKeys err: %w", err)
+			}
+			if addrList.GetError() != nil {
+				return nil, fmt.Errorf("GetPrivateKeys: ListKeys response err: %w", addrList.GetError())
+			}
+
+			for _, address := range addrList.Addresses {
+				key, err := kmd.ExportKey([]byte(walletHandle.WalletHandleToken), "", address)
+				if err != nil {
+					return nil, fmt.Errorf("GetPrivateKeys: ExportKey err: %w", err)
+				}
+				if key.GetError() != nil {
+					return nil, fmt.Errorf("GetPrivateKeys: ExportKey response err: %w", key.GetError())
+				}
+				keys = append(keys, key.PrivateKey)
+			}
+		}
+		return keys, nil
+	}
+
+	var response []crypto.PrivateKey
+	for _, relayDir := range n.cfg.RelayDirs {
+		keys, err := getKey(relayDir)
+		if err != nil {
+			return nil, nil
+		}
+		response = append(response, keys...)
+	}
+
+	for _, nodeDir := range n.nodeDirs {
+		keys, err := getKey(nodeDir)
+		if err != nil {
+			return nil, nil
+		}
+		response = append(response, keys...)
+	}
+
+	return response, nil
 }
 
 func isNodeDir(path string) bool {
