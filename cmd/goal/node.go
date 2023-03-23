@@ -495,7 +495,7 @@ func makeStatusString(stat model.NodeStatusResponse) string {
 				infoNodeStatusConsensusUpgradeVoting,
 				upgradeYesVotes,
 				upgradeNoVotes,
-				upgradeNextProtocolVoteBefore-stat.LastRound,
+				*stat.UpgradeVoteRounds-upgradeYesVotes-upgradeNoVotes,
 				upgradeVotesRequired,
 				upgradeNextProtocolVoteBefore,
 			)
